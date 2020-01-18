@@ -198,7 +198,7 @@ Verifiably encrypted signatures (VES) were introduced by Boneh, Gentry, Lynn and
 
 This idea is somewhat unintuitive. If I can verify that the signer has indeed signed the message then what's the point of decrypting the ciphertext? A VES is only useful in settings where the signature itself is what has value rather than the fact that someone has signed it. In layer-2 protocols we have exactly this situation. Having a verifiably encrypted transaction signature is not enough to make the transaction valid --- it must first be decrypted and attached to the transaction. Skipping ahead a bit, with our new definitions we do not even require that a valid encrypted signature was created by the signer for it to be a secure VES scheme.
 
-The original definitions of BGLS were made relative to a trusted third party, the \emph{adjudicator}. The original idea was that two parties could optimistically exchange signatures, by  first exchanging verifiably encrypted signatures, then should one of them fail to provide their signature, the other could go to the adjudicator to have it decrypted. This is not appropriate for our setting. In most of the protocols described in Section~\ref{exisitng-protocols}, one of the possibly malicious parties generates the encryption key-pair. We take our first step towards a trusted party free definition by redefining the VES with encryption/decryption semantics:
+The original definitions of BGLS were made relative to a trusted third party, the \emph{adjudicator}. The original idea was that two parties could optimistically exchange signatures, by first exchanging verifiably encrypted signatures, then should one of them fail to provide their signature, the other could go to the adjudicator to have it decrypted. This is not appropriate for our setting. In most of the protocols described in Section~\ref{exisitng-protocols}, one of the possibly malicious parties generates the encryption key-pair. We take our first step towards a trusted party free definition by removing references to the ``adjudicator'' from the definition of VES:
 
 \newcommand{\rightsample}{\hskip2.3pt{\mbox{\tiny${\$}$\normalsize}}\!\!\rightarrow\,}
 
@@ -214,23 +214,23 @@ The original definitions of BGLS were made relative to a trusted third party, th
     \end{itemize}
 
 Any coherent VES should satisfy a basic notion of completeness such that for all messages $m$, valid encryption and signing key pairs $\kEnc$ and $\kSign$ and for all coin tosses of $\EncSign$ the following always holds:
-    \[ \hatsigma = \EncSign(\skSign, \pkEnc, m) \implies \EncVer(\pkSign, \pkEnc, m, \hatsigma) = 1 \land \Verify(\pkSign, m, \DecSig(\skEnc, \hatsigma)) \]
+    \[ \hatsigma = \EncSign(\skSign, \pkEnc, m) \implies \EncVer(\pkSign, \pkEnc, m, \hatsigma) = 1 \land \Verify(\pkSign, m, \DecSig(\skEnc, \hatsigma)) = 1 \]
 \end{definition}
 
-The original work BGLS proposed three security properties: \emph{validity}, \emph{unforgeability}, and \emph{opacity}. To meet the requirements of our setting, we will enhance the definition of validity to not require a trusted party and replace unforgeability with a new \emph{existential unforgeability under chosen message attack} (\EUFCMAVES) property. We keep the original definition of opacity. Therefore our VES requirements are informally as follows:
+The original work BGLS proposed three security properties: \emph{validity}, \emph{unforgeability}, and \emph{opacity}. To meet the requirements of our setting, we will restate validity without reference to a trusted party and replace unforgeability with a new \emph{existential unforgeability under chosen message attack} (\EUFCMAVES) property. We keep the original definition of opacity. Therefore our VES requirements are informally as follows:
 
 \begin{itemize}
     \item \textbf{Validity:} It is infeasible to generate a valid looking ciphertext that does not yield a valid signature upon decryption.
-    \item \textbf{\EUFCMAVES:} A VES ciphertext does not help an adversary forge signatures. In other words, an adversary cannot learn anything useful from a VES ciphertext other than the signature that is encrypted.
+    \item \EUFCMAVES: A VES ciphertext does not help an adversary forge signatures. In other words, an adversary cannot learn anything useful from a VES ciphertext other than the signature that is encrypted.
     \item \textbf{Opacity:} The encrypted signature cannot be extracted from the ciphertext without the decryption key.
 \end{itemize}
 
 
-We formally present our new definitions for validity and introduce \EUFCMAVES after summarizing previous work on improving VES definitions.
+We formally present our new definitions for validity and introduce \EUFCMAVES after summarizing previous work on improving VES definitions. We do not formally describe opacity as the original definitions are not applicable the one-time VES (see Section~\ref{otVES}).
 
 \subsection{Previous Revisions of the VES Security Definitions}
 
-Rückert et al.\ \cite{Ruckert:2009:SVE:1615384.1615387} noticed that \emph{key independent} schemes (which we call Sign then Encrypt (StE)) whose underlying signature schemes are \EUFCMA secure can be proved unforgeable generically. This is remarkable as the original BGLS scheme, which is StE, had a bespoke and involved proof for unforgeability that spanned several pages. We use a similar idea to prove any StE scheme satisfies \EUFCMAVES\@. Hanser et al.\ \cite{VES-structure-preserving} also identified the importance of the \EUFCMA security of the underlying signature scheme. They proved that the underlying signature scheme is unforgeable if the VES scheme is unforgeable based on a different property.
+Rückert et al.\ \cite{Ruckert:2009:SVE:1615384.1615387} noticed that \emph{key independent} schemes (which we call Sign then Encrypt (StE)) whose underlying signature schemes are \EUFCMA secure can be proved unforgeable generically. This is remarkable as the original BGLS scheme, which is StE, had AN involved proof for unforgeability that spanned several pages. We use a similar idea to prove any StE scheme satisfies \EUFCMAVES\@. Hanser et al.\ \cite{VES-structure-preserving} also identified the importance of the \EUFCMA security of the underlying signature scheme. They proved that the underlying signature scheme is unforgeable if the VES scheme is unforgeable based on a different property.
 
 Calderon et al.\ \cite{calderon2014rethinking} discuss the original definitions in detail. They show a pathological VES scheme which is secure according to the original definitions but can be constructed only using a signature scheme i.e.\ without any encryption. They introduce two additional properties to address this. Our definitions allow for the same pathological constructions as we see no reason to prevent them in our setting.
 
@@ -238,9 +238,9 @@ Shao \cite{SHAO20081961} addresses the assumption of trust in the adjudicator by
 
 \subsection{Validity}
 
-Validity protects against an adversary who attempts to create a valid looking ciphertext that when decrypted will not yield a valid signature. The original BGLS definition of validity was inadequate as it only guaranteed a valid signature upon decryption if the ciphertext was generated by the $\EncSign$ algorithm. Rückert et al. \cite{Ruckert:2009:SVE:1615384.1615387} noticed this problem and introduced the additional property of \emph{extractability} which ensured the adversary could not find a malicious ciphertext against the adjudicator's encryption key.
+Validity protects against an adversary who attempts to create a valid looking ciphertext that when decrypted will not yield a valid signature. The original BGLS definition of validity was inadequate as it only guaranteed a valid signature upon decryption if the ciphertext was generated by the $\EncSign$ algorithm. Rückert et al. \cite{Ruckert:2009:SVE:1615384.1615387} noticed this problem and introduced the additional property of \emph{extractability} which ensured the adversary could not find a malicious ciphertext against the trusted adjudicator's encryption key.
 
-This definition of extractability is not enough for our setting as we have no trusted party. In layer-2 protocols, the encryption key and the signing key may be generated by the same malicious party. For example, imagine an adversary who maliciously generates a VES ciphertext on some transaction signature and attempts to sell the decryption key to someone who wishes to know the signature. If they are successful they can get paid for the decryption key but even after obtaining the decryption key the buyer will be unable to get their desired signature. Thus in our setting the adversary must be free to choose the singing and encryption keys. We choose to use the original name of validity to capture this idea as it ensures that the validity of a ciphertext carries through to the validity of the encrypted signature.
+This definition of extractability is not appropriate for our setting as we have no trusted party. In layer-2 protocols, the encryption key and the signing key may be generated by the same malicious party. For example, imagine an adversary who maliciously generates a VES ciphertext on some transaction signature and attempts to sell the decryption key to someone who wishes to know the signature. If they are successful they can get paid for the decryption key but even after obtaining the decryption key the buyer will be unable to get their desired signature. Thus in our setting the adversary must be free to choose the singing and encryption keys. We choose to use the original name of validity to capture this idea as it ensures that the validity of a ciphertext carries through to the validity of the encrypted signature.
 
 \begin{definition}[Validity]
  A VES scheme is valid if, for all PPT algorithms $\adv$, the $\textsf{VES-Validity}$ experiment outputs 1 except with negligible probability over coin tosses of $\adv$ and $\Setup$:
