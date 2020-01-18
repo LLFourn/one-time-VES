@@ -289,12 +289,12 @@ To show that a ciphertext equally offers no extra information to the forger, we 
 \end{definition}
 
 \EUFCMAVES effectively replaces the original definition of \emph{unforgeability} so we now discuss and prove the relationship between the two. The original unforgeability property referred to signature encryptions being unforgeable under the trusted adjudicator's encryption key. Our definition says nothing about the unforgeability of signature encryptions. In fact, an adversary who can produce valid VES ciphertexts without the secret signing key is perfectly compatible with our definition. Of course, they will never be able to forge a VES ciphertext under a particular encryption key. If they could do that then they could trivially forge an encrypted signature under a key for which they know the decryption key and decrypt it. The original definitions seem to have missed this intuition: it is not the security of the VES scheme that prevents there being a successful forger of signature encryptions under a particular key, the \EUFCMA security of the underlying signature scheme already ensures that no such algorithm can exist.
-We use this intuition to prove that any \EUFCMAVES scheme is also unforgeable. First we recall the original definition.
+We use this intuition to prove that any \EUFCMAVES scheme is also unforgeable. First we recall the original BGLS definition.
 
 \begin{definition}[VES Unforgeability \cite{Boneh:2003:AVE:1766171.1766207}]
 \label{original-unforgeability}
 
- A VES scheme $\hatSigma$ is unforgeable if for every PPT algorithm $\F$, with access to an encryption oracle $\tilde{E}$ and a decryption oracle $\tilde{D}$ the $\textsf{VES-Forge}$ experiment outputs 1 with at most negligible probability over the coin tosses of $\EncGen$, $\KeyGen$, $\EncSign$ and $\F$.
+A VES scheme $\hatSigma$ is unforgeable if for every PPT algorithm $\F$, with access to an encryption oracle $\tilde{E}$ and a decryption oracle $\tilde{D}$ the $\textsf{VES-Forge}$ experiment outputs 1 with at most negligible probability over the coin tosses of $\EncGen$, $\KeyGen$, $\EncSign$ and $\F$.
 
  \begin{center}
  \fbox{
@@ -327,7 +327,7 @@ Note that the oracles in $\textsf{VES-Forge}$ only provide encryptions and decry
 Now we show that any forger who breaks unforgeability breaks \EUFCMAVES, which implies that \EUFCMAVES is at least as strong as unforgeability.
 
 \begin{theorem}[\EUFCMAVES $\implies$ Unforgeability]
-If a VES scheme is \EUFCMAVES secure and has the \emph{validity} property then it also has the original BGLS \emph{unforgeability} property defined above.
+If a VES scheme is \EUFCMAVES secure and has the \emph{validity} property then it also has the original BGLS unforgeability property defined above.
 \end{theorem}
 
 \begin{proof}
