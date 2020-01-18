@@ -35,12 +35,13 @@
 \usepackage{fixltx2e}
 \usepackage[n,advantage,operators,sets,adversary,landau,probability,notions,logic,ff, mm, primitives,events,complexity,asymptotics,keys]{cryptocode}
 \captionsetup[figure]{labelfont={bf},name={Fig.},labelsep=period}
-\theoremstyle{definition}
+
 \newtheorem{claim}{Claim}[section]
 \newtheorem{conjecture}{Conjecture}[section]
-\newtheorem{definition}{Definition}[section]
-\newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{Theorem}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
 \newtheorem{remark}{Remark}
 
 \def\SPSB#1#2{\rlap{\textsuperscript{#1}}\SB{#2}}
@@ -373,7 +374,7 @@ It is easy to see that any valid StE scheme must be \EUFCMAVES secure. The extra
 
 \begin{theorem}[StE $\implies$ \EUFCMAVES]
 Let $\hatSigma$ be a StE VES scheme,  $\Sigma$ be its underlying signature scheme and $\Pi = (\ENCALG)$ be its associated public key encryption scheme.
-If there is a \EUFCMA reduction $\R$ for $\Sigma$ to some hard problem $\hardproblem$, then there is a \EUFCMAVES reduction $\hatR$ for $\hatSigma$ to $\hardproblem$.
+If there is reduction $\R$ from some hard problem $\hardproblem$ to the \EUFCMA security of $\Sigma$, then there is a reduction $\hatR$ from $\hardproblem$ to the \EUFCMAVES security $\hatSigma$.
 \end{theorem}
 
 \begin{proof}
