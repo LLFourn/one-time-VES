@@ -378,7 +378,7 @@ If there is reduction $\R$ from some hard problem $\hardproblem$ to the \EUFCMA 
 \end{theorem}
 
 \begin{proof}
-The only difference between the \EUFCMA and \EUFCMAVES experiments is that the forger is provided an extra signature encryption oracle $E$. Since $\hatSigma$ is StE, we can easily construct $\hatR$ by having it run $\R$ and forwarding queries to $E$ to the singing oracle $S$ of $\R$ and encrypting the result. Specifically, when $\hatR$ receives an $E$ oracle query $(m, \pkEnc)$ it makes a query $(m)$ to $S$ and receives $\sigma$. It then sets $\hatsigma \gets \Enc(\pkEnc, m)$ and returns $\hatsigma$ to the forger. This does not interfere with $\R$ at all so we can conclude that $\hatR$ is also a reduction to $\hardproblem$.
+The only difference between the \EUFCMA and \EUFCMAVES experiments is that the forger is provided an extra signature encryption oracle $E$. Since $\hatSigma$ is StE, we can easily construct $\hatR$ by having it run $\R$ and forwarding queries to $E$ to the singing oracle $S$ of $\R$ and encrypting the result. Specifically, when $\hatR$ receives an $E$ oracle query $(m, \pkEnc)$ it makes a query $(m)$ to $S$ and receives $\sigma$. It then sets $\hatsigma \gets \Enc(\pkEnc, m)$ and returns $\hatsigma$ to the forger. This does not interfere with $\R$ at all so $\hatR$ is also a reduction from $\hardproblem$.
 \end{proof}
 
 \section{One-Time Verifiably Encrypted Signatures}
@@ -507,7 +507,7 @@ The Schnorr one-time VES is \EUFCMAVES secure.
 \end{theorem}
 
 \begin{proof}
-We transform the standard Schnorr \EUFCMA reduction to the \DLOG problem in the random oracle model by Pointcheval and Stern\cite{pointcheval2000security} into a \EUFCMAVES reduction by simulating the additional signature encryption oracle $E$. Our reduction $\RDL$ simulates $E$ by programming the random oracle $H$ in a similar way to how it usually simulates the signing oracle $S$ as shown below:
+We transform the standard Schnorr reduction from the \DLOG problem to the \EUFCMA security of Schnorr signatures in the random oracle model by Pointcheval and Stern\cite{pointcheval2000security} into a \EUFCMAVES reduction by simulating the additional signature encryption oracle $E$. Our reduction $\RDL$ simulates $E$ by programming the random oracle $H$ in a similar way to how it usually simulates the signing oracle $S$ as shown below:
 
 \begin{center}
   \fbox{%
@@ -673,7 +673,7 @@ It remains to be shown that a CDH solution is the only extra information the adv
 
 \begin{theorem}
 \label{claim-ecdsa-eufcma}
-The \EUFCMA reduction in the bijective random oracle model to the discrete logarithm problem for the ECDSA signature scheme in \cite{ecdsa-eufcma} can be transformed into a $\EUFCMAVES$ reduction for the ECDSA one-time VES if the CDH problem is easy.
+The reduction from the discrete logarithm problem to the EUFCMA security of ECDSA in the bijective random oracle model from \cite{ecdsa-eufcma} can be transformed into a $\EUFCMAVES$ reduction for the ECDSA one-time VES if the CDH problem is easy.
 \end{theorem}
 
 \section{Semi-Scriptless protocols}
