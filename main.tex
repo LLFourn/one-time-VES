@@ -288,8 +288,7 @@ To show that a ciphertext equally offers no extra information to the forger, we 
 \end{center}
 \end{definition}
 
-\EUFCMAVES effectively replaces the original definition of \emph{unforgeability} so we now discuss and prove the relationship between the two. The original unforgeability property referred to signature encryptions being unforgeable under the trusted adjudicator's encryption key. Our definition says nothing about the unforgeability of signature encryptions. In fact, an adversary who can produce valid VES ciphertexts without the secret signing key is perfectly compatible with our definition. Of course, they will never be able to forge a VES ciphertext under a particular encryption key. If they could do that then they could trivially forge an encrypted signature under a key for which they know the decryption key and decrypt it. The original definitions seem to have missed this intuition: it is not the security of the VES scheme that prevents there being a successful forger of signature encryptions under a particular key, the \EUFCMA security of the underlying signature scheme already ensures that no such algorithm can exist.
-We use this intuition to prove that any \EUFCMAVES scheme is also unforgeable. First we recall the original BGLS definition.
+\EUFCMAVES effectively replaces the original definition of \emph{unforgeability} so we now discuss and prove the relationship between the two. The original unforgeability property referred to signature encryptions being unforgeable under the trusted adjudicator's encryption key. \EUFCMAVES says nothing about the unforgeability of signature encryptions. In fact, an adversary who can produce valid VES ciphertexts without the secret signing key is perfectly compatible. Of course, they will never be able to forge a VES ciphertext under a particular encryption key. If they could do that, then they could trivially forge an encrypted signature under a key for which they know the decryption key and decrypt it. The original definitions seem to have missed this intuition: it is not the security of the VES scheme that prevents there being a successful forger of signature encryptions under a particular key, the \EUFCMA security of the underlying signature scheme already ensures that no such algorithm can exist. After recalling the original BGLS definition of unforgeability, we use this intuition to prove that any \EUFCMAVES scheme is also unforgeable.
 
 \begin{definition}[VES Unforgeability \cite{Boneh:2003:AVE:1766171.1766207}]
 \label{original-unforgeability}
@@ -324,10 +323,8 @@ Note that the oracles in $\textsf{VES-Forge}$ only provide encryptions and decry
 
 \end{definition}
 
-Now we show that any forger who breaks unforgeability breaks \EUFCMAVES, which implies that \EUFCMAVES is at least as strong as unforgeability.
-
 \begin{theorem}[\EUFCMAVES $\implies$ Unforgeability]
-If a VES scheme is \EUFCMAVES secure and has the \emph{validity} property then it also has the original BGLS unforgeability property defined above.
+If a VES scheme is \EUFCMAVES secure and has the \emph{validity} property then it also has the original BGLS unforgeability property of Definition~\ref{original-unforgeability}.
 \end{theorem}
 
 \begin{proof}
@@ -364,7 +361,7 @@ By definition, $\epsilon = \prob{EV}$  and $\epsilon' = \prob{V}$
 Which shows $\epsilon'$ is non-negligible if $\epsilon$ is non-negligible, completing the proof.
 \end{proof}
 
-We now prove that the existing schemes we are aware of\cite{Boneh:2003:AVE:1766171.1766207, Ruckert:2009:SVE:1615384.1615387, waters-ves, SHAO20081961, VES-structure-preserving} are \EUFCMAVES secure due to the \emph{Sign then Encrypt} (StE) structure they all share. That is, internally the $\EncSign$ algorithm first generates a normal signature using $\Sign$ and then encrypts the result. Formally:
+As we have already argued, \EUFCMAVES captures our requirement that the scheme be secure without reference to a trusted party. We now propose using \EUFCMAVES as the standard VES security definition even in the trusted party setting since it implies BGLS unforgeability and it is much easier to prove for the schemes that have been developed so far. We can prove all existing schemes we are aware of \cite{Boneh:2003:AVE:1766171.1766207, Ruckert:2009:SVE:1615384.1615387, waters-ves, SHAO20081961, VES-structure-preserving} \EUFCMAVES secure just by the \emph{Sign then Encrypt} (StE) structure they all share. That is, internally the $\EncSign$ algorithm first generates a normal signature using $\Sign$ and then encrypts the result. Formally:
 
 \begin{definition}[Sign then Encrypt VES]
 A \emph{Sign then Encrypt} (StE) VES scheme is defined with an ordinary \emph{underlying} signature scheme $\Sigma := (\SIGNALG)$ an \emph{associated} public key encryption scheme $\Pi = (\ENCALG)$ and a VES verification algorithm $\EncVer$ such that if we define $\DecSig := \Dec$ and $\EncSign(\skSign, \pkEnc, m) := \Enc(\pkEnc, \Sign(\pkSign, m))$ then $\hatSigma := (\EncGen, \EncSign, \EncVer, \DecSig)$ is a VES scheme according to Definition~\ref{VES}.
