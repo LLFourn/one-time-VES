@@ -151,7 +151,7 @@ A scriptless lottery was recently proposed\cite{fournier_lottery} which uses the
 
 \subsection{Our Contribution}
 
-In Section~\ref{VES-section}, we contribute to theory of verifiably encrypted signatures in general. The original security definitions\cite{Boneh:2003:AVE:1766171.1766207} only required the scheme to be secure if the encryption key-pair was chosen by the trusted adjudicator. VES schemes secure by these definitions are generally inappropriate for use in layer-2 protocols where a  trusted party is rarely assumed. We propose new stronger security definitions without reference to trusted parties and show that all existing schemes satisfy our new definitions.
+In Section~\ref{VES-section}, we contribute to theory of verifiably encrypted signatures in general. The original security definitions\cite{Boneh:2003:AVE:1766171.1766207} only required the scheme to be secure if the encryption key-pair was chosen by the trusted adjudicator. VES schemes secure by these definitions are generally inappropriate for use in layer-2 protocols where a  trusted party is rarely assumed. We propose new security definitions without reference to trusted parties and show that all existing schemes satisfy our new definitions.
 
 In Section~\ref{otVES} we formally introduce one-time verifiably encrypted signatures. We then frame the existing Schnorr and ECDSA ``adaptor signature'' schemes as one-time VES schemes. We prove the Schnorr scheme secure but find that the ECDSA one-time VES unintentionally leaks a Diffie-Hellman tuple for the singing key and the encryption key. We incorporate this weakness and prove that this is at least the only problem with the scheme.
 
