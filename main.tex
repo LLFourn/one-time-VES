@@ -647,23 +647,25 @@ Unfortunately, while trying to prove the scheme \EUFCMAVES secure we found a pro
 
 \begin{lemma}
 \label{ecdsa-ves-not-secure}
-The ECDSA one-time VES scheme is \emph{not} \EUFCMAVES secure if the Computational Diffie-Hellman (CDH) problem is hard.
+There exists no \emph{key-preserving} \EUFCMAVES reduction for the ECDSA one-time VES scheme if the Computational Diffie-Hellman Problem (CDH) is hard.
 \end{lemma}
 
 \newcommand{\ECDSAVES}{\hatSigma_{\text{ECDSA}}}
 \newcommand{\CDH}{\textsf{CDH}}
+\newcommand{\Sim}{\mathcal{S}}
 
 \begin{proof}
-Let $\CDH(X,Y)$ denote an instance of the CDH problem and let $\RDL$ be a key preserving \EUFCMAVES reduction for the ECDSA one-time VES scheme to the discrete logarithm problem (all with respect to the same group element $g$). We contradict the existence of $\RDL$ by contriving a forger $\F$ that leverages it to solve $\CDH(X,Y)$. We start by running $\R_{\DLOG}(X, \F)$. When $\F^{S,E}(X)$ is activated, it makes a query $(m,Y)$ with an arbitrary $m$ to $E$ (which is simulated by $\RDL$) and receives $(R, \hat{R}, \hat{s}, \pi)$ in response.
 
-First, note that $(\hat{R},Y,R)$ is a valid Diffie-Hellman tuple if $\RDL$ is a valid reduction. Even though $\R$ can simulate proofs $\pi$ for invalid tuples this is not enough to simulate the view of a real forger. Regardless of validity of $\pi$, a forger can make a query to $E(Y',m')$ with an encryption key-pair it has generated itself $(y',Y')$ and check that $\hat{R}^{y'} = R$ in the response. If the check fails with non-negligible probability then the simulated $E$ can be distinguished from the real $E$ in the \EUFCMAVES experiment and so $\RDL$ cannot be valid reduction.
+  Let $\CDH(X,Y)$ for $(X,Y) \sample \G^2$ denote an instance of the CDH problem with respect to the generator $g$ of the ECDSA one-time VES\@. We will prove our statement by solving $\CDH(X,Y)$ with only black-box access to a simulator $\Sim$ for the encryption oracle $E$ that must be provided to the forger in a key-preserving \EUFCMAVES reduction. This contradicts the existence of $\Sim$ and therefore no key-preserving \EUFCMAVES reduction scheme can exist if the CDH problem is hard. To solve $\CDH(X,Y)$ we run the simulator for $\Sim$ with $X$ as the signing key and then query it with an arbitrary message $m$: $(R, \hat{R}, \hat{s}, \pi) \sample \Sim(m,Y)$.
 
-Given $(\hat{R},Y,R)$ is a valid Diffie-Hellman tuple, and we know that $\hat{s} = r^{-1}(H(m) + \Rx{}x)$,  $R = Y^r$ and $X = g^x$ we can compute $\CDH(X,Y)$ as follows:
+   First, note that $(\hat{R},Y,R)$ must be a valid Diffie-Hellman tuple if $\Sim$ properly simulates the an encrypted signing oracle. Even though $\Sim$ can simulate DLEQ proofs (by their zero knowledge property) for invalid tuples, this is not enough to simulate the view of a real forger. Regardless of validity of $\pi$, a forger can make a query to $E(Y',m')$ with an encryption key-pair it has generated itself $(y',Y')$ and check that $\hat{R}^{y'} = R$ in the response. If the check fails with non-negligible probability then $\Sim$ can be distinguished from the real oracle $E$ in the \EUFCMAVES experiment.
+
+   Given $(\hat{R},Y,R)$ is a valid Diffie-Hellman tuple and $\hat{s} = r^{-1}(H(m) + \Rx{}x)$,  $R = Y^r$ and $X = g^x$ are true since $(R, \hat{R}, \hat{s}, \pi)$ must be a valid signature encryption, we can compute $\CDH(X,Y)$ as $(R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}}$ since:
 
 \begin{align*}
-    Y^{H(m) + \Rx{}x} & = R^{\hat{s}}  \\
-    Y^{\Rx{}x}   & = R^{\hat{s}}Y^{-H(m)}\\
-    \CDH(X,Y) =  Y^{x} & = (R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}}
+    R^{\hat{s}} & = Y^{H(m) + \Rx{}x} &  \\
+    R^{\hat{s}}Y^{-H(m)} & =  Y^{\Rx{}x} \\
+    (R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}} & = Y^{x}
 \end{align*}
 \end{proof}
 
