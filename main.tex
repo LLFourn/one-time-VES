@@ -510,7 +510,8 @@ The Schnorr one-time VES is \EUFCMAVES secure.
 \end{theorem}
 
 \begin{proof}
-We transform the standard Schnorr reduction from the \DLOG problem to the \EUFCMA security of Schnorr signatures in the random oracle model by Pointcheval and Stern\cite{pointcheval2000security} into a \EUFCMAVES reduction by simulating the additional signature encryption oracle $E$. Our reduction $\RDL$ simulates $E$ by programming the random oracle $H$ in a similar way to how it usually simulates the signing oracle $S$ as shown below:
+  We transform the standard Schnorr reduction from the \DLOG problem to the \EUFCMA security of Schnorr signatures in the random oracle model by Pointcheval and Stern\cite{pointcheval2000security} into a \EUFCMAVES reduction by simulating the additional signature encryption oracle $E$.
+  Note the original reduction was not did not key-prefixed but the same reduction can be applied to key-prefixed Schnorr. Our reduction $\RDL$ simulates $E$ by programming the random oracle $H$ in a similar way to how it usually simulates the signing oracle $S$ as shown below:
 
 \begin{center}
   \fbox{%
@@ -540,7 +541,8 @@ We transform the standard Schnorr reduction from the \DLOG problem to the \EUFCM
         }
 %    \end{pchstack}
     }
-\end{center}
+  \end{center}
+
 The fact that we can efficiently simulate $E$ without changing the internals of $\RDL$ completes the proof.
 \end{proof}
 
@@ -727,7 +729,7 @@ We present a workaround that allows protocol designers to realise many of the be
     }
     \end{pchstack}
     \end{mdframed}
-    \caption{The two-party signing and encrypted signing algorithms for an 2-of-2 \OPCHECKMULTISIG output. }
+    \caption{The two-party signing and encrypted signing algorithms for an 2-of-2 \OPCHECKMULTISIG output.}
     \label{opcms-2p-ves}
 \end{figure}
 
