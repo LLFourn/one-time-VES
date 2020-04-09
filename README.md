@@ -1,6 +1,6 @@
 # One-Time Verifiably Encrypted Signatures A.K.A. Adaptor Signatures
 
-My attempt to formalize "adaptor signatures".
+My attempt to formalize "adaptor signatures". see [main.pdf](./main.pdf)
 
 ### TODO
 
