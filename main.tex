@@ -757,6 +757,13 @@ Having said this, semi-scriptless protocols are a practical alternative to two-p
 \newcommand{\betarange}{\mathbb{B}}
 \newcommand{\Sdleq}{\pcalgostyle{S}_{\DLEQ}}
 
+\emph{authors note: This proof is wrong. By giving the reduction access to the
+  $\Ocdh$ oracle we implicitly make the discrete logarithm problem
+  easy\cite{Kushwaha16} making the reduction from the discrete logarithm
+  pointless. I am in the process of fixing the proof so that it no longer
+  requires such a powerful oracle and can be reduced to the static
+  Diffie-Hellman problem \cite{SDHP}}
+
 \label{proof-ecdsa-eufcma}
 As we have proved, the ECDSA one-time VES is not \EUFCMAVES secure if the CDH problem is hard. We now wish to show that if the CDH problem were easy then it would satisfy \EUFCMAVES i.e.\ leak no useful information to a forger. Thus we give our reduction access to an $\Ocdh$ oracle which when queried with $\Ocdh(X,Y)$ returns $Z$ such that (X,Y,Z) is a Diffie-Hellman tuple with respect to $g$. Additionally, in the reduction we simulate the NIZK $\DLEQ$ proof $\pi$ with $\Sdleq$.
 
