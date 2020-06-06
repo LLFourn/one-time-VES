@@ -1,0 +1,128 @@
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:
+\section{Schnorr One-Time VES Scheme}
+What we call the Schnorr one-time VES was introduced by Poelstra \cite{poelstra2017scriptless} which he termed an ``adaptor signature''\cite{poelstra-adaptor} with the encryption key being termed an ``auxiliary point''\cite{blind-tumbler} or sometimes just ``$T$''. A major benefit of our one-time VES concept is to be able to explain this useful idea with intuitive encryption/decryption semantics. It is typically described with a two-party signing protocol as this is where it is most useful. We describe the single singer scheme in Figure~\ref{fig:schnorr-ves} including its underlying Schnorr signature scheme. The Schnorr signature scheme was introduced by its namesake in \cite{Schnorr:1989:EIS:646754.705037} and our description resembles the key-prefixed scheme described in the Schnorr Bitcoin Improvement Proposal\cite{bip-schnorr} currently under consideration.
+
+\begin{figure}[h]
+
+    \centering
+    \begin{mdframed}
+    \begin{pchstack}[center]
+    \procedure{$\KeyGen/\EncGen$}{
+        x \sample \ZZ_q; X \gets g^{x} \\
+        sk := (x,X); pk := X \\
+        \pcreturn (sk,pk)
+    }
+    \pchspace
+    \procedure{$\Sign(\skSign, m)$}{
+        (x,X) := \skSign; \\
+        r \sample \ZZ_q; R \gets g^r \\
+        c := H(R || X || m) \\
+        s \gets r + cx \\
+        \pcreturn \sigma := (R,s) \\
+    }
+
+    \procedure{$\Verify(\pkSign,m,\sigma)$}{
+        X := \pkSign; (R,s) := \sigma \\
+        c := H(R || X || m) \\
+        \pcreturn R = g^{s}X^{-c}
+    }
+    \pchspace
+    \procedure{$\EncSign(\skSign,\pkEnc, m)$}{%
+        (x,X) := \skSign; Y := \pkEnc  \\
+        r \sample \ZZ_q; \hat{R} \gets{} g^r \\
+        R \gets \hat{R}Y \\
+         c := H(R || X || m) \\
+        \hat{s} \gets r + cx \\
+         \pcreturn \hat{\sigma} := (\hat{R},\hat{s}) \\
+    }
+    \end{pchstack}
+    \begin{pchstack}[center]
+    \procedure{$\EncVer(\pkSign,\pkEnc, m, \hatsigma)$}{%
+        X := \pkSign; Y := \pkEnc \\
+        (\hat{R},\hat{s}) := \hatsigma \\
+        R \gets \hat{R}Y \\
+        c := H(R || X || m) \\
+        \pcreturn \hat{R} = g^{\hat{s}}X^{-c} \\
+    }
+    \pchspace
+    \procedure{$\DecSig(\skEnc,\hatsigma)$}{
+        (\hat{R},\hat{s}) := \hatsigma \\
+        (y, Y) := \skEnc \\
+        R \gets \hat{R}Y \\
+        s \gets \hat{s} + y \\
+        \pcreturn \sigma := (R,s)
+    }
+    \pchspace
+    \procedure{$\RecKey(\pkEnc, \hatsigma)$}{
+        (\hat{R},\hat{s}) := \hatsigma \\
+        \pcreturn \rec := \hat{s} \\
+    }
+    \pchspace
+    \procedure{$\Rec(\sigma, \rec)$}{
+        (R,s) := \sigma \\
+        \hat{s} := \rec \\
+        y \gets  s - \hat{s} \\
+        \pcreturn y
+    }
+    \end{pchstack}
+    \end{mdframed}
+    \caption{The algorithms of the Schnorr one-time VES scheme with a hash algorithm $H$}
+    \label{fig:schnorr-ves}
+\end{figure}
+
+Since the $\EncSign$ algorithm is a simple tweak of the sign algorithm it is easy to get an intuition for the security of the scheme. Unsurprisingly, we find that the scheme is unconditionally valid and recoverable and is \EUFCMAVES secure. We now formally prove these properties.
+
+\begin{lemma}
+The Schnorr one-time VES is unconditionally valid and recoverable.
+\end{lemma}
+
+\begin{proof}
+ Since $\EncVer(X,Y,m,(\hat{R},\hat{s})) = 1$ implies $ \hat{R} = g^{\hat{s}}X^{-c}$ where $c := H(\hat{R}Y || X || m)$, by the one-way homomorphism between $\ZZ_q$ and $\G$ we know that $\hatsigma$ encrypts some valid signature $(R,s) := (\hat{R}Y, \hat{s} + y)$ where $g^y = Y$ and is therefore valid because:
+\[ \hat{R}Y = Yg^{\hat{s}}X^{-c} = g^{\hat{s} + y}X^{-c} \]
+By the same token, the scheme is recoverable because $\Rec((\hat{R}Y, \hat{s} + y)), \hat{s})$ always returns the decryption key $y = s - \hat{s}$.
+\end{proof}
+
+
+\begin{theorem}
+The Schnorr one-time VES is \EUFCMAVES secure.
+\end{theorem}
+
+\begin{proof}
+  We transform the standard Schnorr reduction from the \DLOG problem to the \EUFCMA security of Schnorr signatures in the random oracle model by Pointcheval and Stern\cite{pointcheval2000security} into a \EUFCMAVES reduction by simulating the additional signature encryption oracle $E$.
+  Note the original reduction was not did not key-prefixed but the same reduction can be applied to key-prefixed Schnorr. Our reduction $\RDL$ simulates $E$ by programming the random oracle $H$ in a similar way to how it usually simulates the signing oracle $S$ as shown below:
+
+\begin{center}
+  \fbox{%
+%     \begin{pchstack}[center]
+        \procedure{$\RDL(X)$}{
+           \pccomment{Run the reduction from \cite{pointcheval2000security}} \\
+           \text{...} \gets \F^{E,S}_{\EUFCMAVES}(X) \\
+        }
+        \pchspace
+        \procedure{Simulate $S(m)$}{
+            s,c \sample \ZZ_q \\
+            R \gets g^sX^{-c} \\
+            \pcif H(R || X || m) = \bot \pcthen \\
+             \t H(R || X || m) := c \\
+             \t \pcreturn (R,s) \\
+            \pcelse \textbf{abort} \\
+        }
+        \pchspace
+        \procedure{Simulate $E(\pkEnc, m)$}{
+             Y := \pkEnc \\
+             \hat{s},c \sample \ZZ_q \\
+             \hat{R} \gets g^{\hat{s}}X^{-c}; R \gets \hat{R}Y \\
+             \pcif H(R || X || m) = \bot \pcthen \\
+             \t H(R || X || m) := c \\
+             \t \pcreturn (\hat{R},\hat{s}) \\
+             \pcelse \textbf{abort} \\
+        }
+%    \end{pchstack}
+    }
+  \end{center}
+
+The fact that we can efficiently simulate $E$ without changing the internals of $\RDL$ completes the proof.
+\end{proof}

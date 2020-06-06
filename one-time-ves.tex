@@ -1,0 +1,43 @@
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:
+\section{One-Time Verifiably Encrypted Signatures}
+\label{otVES}
+We introduce the \emph{one-time verifiably encrypted signature scheme} to abstract the functionality of the ``adaptor signature''\cite{poelstra-adaptor}. A one-time VES is a VES with an additional property: given the ciphertext and the decrypted signature, the decryption key is easily recoverable.
+Obviously, this property makes it useless for the optimistic fair exchange of signatures with a trusted party envisioned for ordinary VES schemes, as the trusted adjudicator would leak their decryption key after its first use.
+Despite this, the property turns out to be incredibly useful to layer-2 protocol designers as it allows them to force the release of a secret key whenever a party broadcasts a decrypted transaction signature.
+We define by extending the original VES definition:
+
+\begin{definition}[One-Time Verifiably Encrypted Signatures]
+A One-Time Verifiably Encrypted Signature scheme (one-time VES) is a Verifiably Encrypted Signature scheme (\SIGNALG, \VESALG) with the following additional algorithms:
+\begin{itemize}
+    \item $\RecKey(\pkEnc, \hatsigma) \rightarrow \delta$: A deterministic recovery key extraction algorithm which extracts a recovery key $\delta$ from the ciphertext $\hatsigma$ and the public encryption key $\pkEnc$.
+    \item $\Rec(\sigma,\rec) \rightarrow \skEnc$: A deterministic decryption key recovery algorithm which when given a decrypted signature $\sigma$ and the recovery key $\rec$ associated with the original ciphertext, returns the secret decryption key $\skEnc$.
+\end{itemize}
+
+\end{definition}
+
+Technically, $\Rec$ takes a ``recovery key'' $\delta$ rather than the ciphertext $\hatsigma$ but they should usually be thought of as equivalent. The distinction only really becomes necessary in Section~\ref{semi-scriptless} when we construct a simple two party encrypted signing protocol where one party is not able to output the whole ciphertext but is able to output the recovery key.
+
+To be considered secure, we require a one-time VES scheme to have the \emph{completeness}, \emph{validity} and \EUFCMAVES properties of an ordinary VES along with \emph{recoverability} which we define as follows.
+
+\begin{definition}[Recoverability]
+
+ A one-time VES scheme is recoverable if for all PPT algorithms $\adv$ the $\textsf{VES-Recover}$ experiment outputs 1 except with negligible probability over the coin tosses of $\adv$ and $\Setup$:
+
+\begin{center}
+    \fbox{%
+          \procedure{$\textsf{VES-Recover}^{\adv}_{\Setup}$}{%
+            \hatSigma \sample \Setup(1^k) \\
+            (\pkSign,(\skEnc, \pkEnc), m,\hatsigma ) \sample \adv(\hatSigma) \\
+            \delta \gets \hatSigma.\RecKey(\pkEnc, \hatsigma); \sigma \gets \hatSigma.\DecSig(\skEnc, \hatsigma) \\
+            \pcreturn(\hatSigma.\textsf{valid}(\skEnc, \pkEnc) \land \hatSigma.\FullEncVer \land \hatSigma.\FullVer) \implies \hatSigma.\Rec(\sigma, \delta) = \skEnc
+        }
+    }
+
+ \end{center}
+
+\end{definition}
+
+Note that we no longer have need of the \emph{opacity} property as defined for an ordinary VES scheme. Recall that the informal purpose of opacity is to ensure that an encrypted signature cannot be accessed without the decryption key. Recoverability makes this is trivial because if you are able to access the signature you can recover the decryption key anyway. In other words, obtaining a signature from a ciphertext without the decryption key is no easier than obtaining the decryption key just given the public encryption key (which is hopefully hard). Crucially, this also means that even the signer themselves cannot produce the signature from the ciphertext without the decryption key. This necessarily implies that one-time VES schemes only exist for probabilistic signature schemes where there is an exponential number of possible signatures under a public key for any message.

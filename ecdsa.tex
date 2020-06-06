@@ -1,0 +1,162 @@
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:
+\section{ECDSA One-Time VES Scheme}
+\label{ecdsa-ot-ves-section}
+
+\newcommand{\Pdleq}{\pcalgostyle{P}_{\textsf{DLEQ}}}
+\newcommand{\Vdleq}{\pcalgostyle{V}_{\textsf{DLEQ}}}
+
+In order circumvent the need for Schnorr signatures, which are not included in the Bitcoin protocol today, Moreno-Sanchez et al.\  developed an adaptor signature construction for the standard ECDSA signature scheme already used in Bitcoin\cite{ecdsa-scriptless-scripts}.
+It was later applied to achieve a payment channel construction with better privacy in \cite{cryptoeprint:2018:472} and an efficient tumbler in \cite{cryptoeprint:2019:589}.
+The scheme is built upon the two-party ECDSA protocol from \cite{Lindell2pECDSA}.
+We translate it into a single signer scheme in Figure~\ref{fig:ecdsa-adaptor}.
+
+As the protocol is single signer it avoids all the complexities that come with two-party ECDSA protocols.
+It only requires requires a simple non-interactive zero knowledge proof of discrete logarithm equality, whose proving and verification algorithms we denote as $(\Pdleq,\Vdleq)$.
+When invoked as $\Pdleq((g, A),(h,B),w)$, it generates a proof of membership of the language:
+
+\newcommand{\DLEQ}{\textsf{DLEQ}\xspace}
+\[ L_{\DLEQ} = \{ (g, h, A, B) \in \G^4 \mid  \exists w \in \ZZ_q : A = g^w \land B = h^w \} \]
+
+We instantiate this proof with the Fiat-Shamir transform applied to the Sigma protocol for the relation originally from \cite{dleq-proof}.
+
+\newcommand{\Rx}{R_\texttt{x}}
+\newcommand{\hatRx}{\hat{R}_\texttt{x}}
+\newcommand{\xcoord}{f}
+
+\begin{figure}[h]
+    \centering
+    \begin{mdframed}
+    \begin{pchstack}[center]
+    \procedure{$\KeyGen/\EncGen$}{
+        x \sample \ZZ_q; X \gets g^{x} \\
+        sk := (x,X); pk := X \\
+        \pcreturn (sk,pk)
+    }
+    \pchspace
+
+    \procedure{$\Sign(\skSign, m)$}{
+        (x,X) := \skSign; \\
+        r \sample \ZZ_q; R \gets g^r \\
+        \Rx \gets \xcoord(R) \\
+        s \gets r^{-1}(H(m) + \Rx{}x)\\
+        \pcreturn \sigma := (\Rx,s) \\
+    }
+
+    \procedure{$\Verify(\pkSign,m,\sigma)$}{
+        X := \pkSign; (\Rx,s) := \sigma \\
+        R' \gets (g^{H(m)}X^{\Rx})^{s^{-1}} \\
+        \pcreturn \xcoord(R') = \Rx \\
+    }
+    \pchspace
+    \procedure{$\EncSign(\skSign,\pkEnc, m)$}{%
+        (x,X) := \skSign; Y := \pkEnc  \\
+        r \sample \ZZ_q; \hat{R} \gets{} g^r; R \gets Y^{r} \\
+        \pi \sample \pcalgostyle{P}_{\DLEQ}((g, \hat{R}), (Y, R),r) \\
+        \Rx \gets \xcoord(R) \\
+        \hat{s} \gets r^{-1}(H(m) + \Rx{}x)\\
+        \pcreturn \hat{\sigma} := (R, \hat{R},\hat{s}, \pi) \\
+    }
+    \end{pchstack}
+    \begin{pchstack}[center]
+
+    \procedure{$\EncVer(\pkSign,\pkEnc, m, \hatsigma)$}{%
+        X := \pkSign;  Y := \pkEnc \\
+        (R, \hat{R},\hat{s}, \pi) := \hatsigma \\
+        \pcalgostyle{V}_{\DLEQ}((g, \hat{R}), (Y, R)), \pi) \stackrel{?}{=} 1\\
+        \Rx \gets \xcoord(R) \\
+        \pcreturn \hat{R} = (g^{H(m)}X^{\Rx})^{\hat{s}^{-1}} \\
+    }
+    \pchspace
+    \procedure{$\DecSig(\skEnc,\hatsigma)$}{
+        (R, \hat{R},\hat{s}, \pi) := \hatsigma \\
+        (y, Y) := \skEnc \\
+        s \gets \hat{s}y^{-1} \\
+        \pcreturn \sigma := (\xcoord(R),s)
+    }
+    \pchspace
+    \procedure{$\RecKey(\pkEnc, \hatsigma)$}{
+        (R, \hat{R},\hat{s}, \pi) := \hatsigma \\
+        Y := \pkEnc \\
+        \pcreturn \rec := (Y, \hat{s})
+    }
+    \pchspace
+    \procedure{$\Rec(\sigma, \rec)$}{
+        (\Rx,s) := \sigma; (Y, \hat{s}) := \rec \\
+        \tilde{y} \gets  s^{-1}\hat{s} \\
+        y := \left\{\begin{array}{l}
+                \tilde{y}  \hspace{1em} \pcif g^{\tilde{y}} = Y \pclb
+                -\tilde{y} \hspace{0.33em} \pcif g^{\tilde{y}} = Y^{-1} \pclb
+                \bot \hspace{1em} \textbf{otherwise}
+                \end{array}
+             \right. \\
+        \pcreturn y
+    }
+    \end{pchstack}
+    \end{mdframed}
+    \caption{The algorithms of the ECDSA one-time VES scheme. $f: \G \rightarrow \ZZ_q$ converts a an elliptic curve point to its x-coordinate mod $q$.}
+    \label{fig:ecdsa-adaptor}
+\end{figure}
+
+We now attempt to prove the scheme secure.
+
+\begin{lemma}
+The ECDSA one-time VES is valid and unconditionally recoverable.
+\end{lemma}
+\begin{proof}
+If $\EncVer(X,Y,m,(R, \hat{R},\hat{s}, \pi)) = 1$ then $\hat{R} = (g^{H(m)}X^{\Rx})^{\hat{s}^{-1}}$ and $\hat{R}^{y} = R$ if $\pi$ is sound. Which means $\hat{R}^{y} = R = (g^{H(m)}X^{\Rx})^{\hat{s}^{-1}y}$. Therefore $\DecSig$ produces a valid signature $\sigma := (R, \hat{s}y^{-1})$ whenever $\hatsigma$ is valid except with the negligible probability that $\pi$ is unsound. If $\sigma$ is valid then $\Rec$ will always recover $\tilde{y} \gets s^{-1}\hat{s} = (\hat{s}y^{-1})^{-1}\hat{s}$, which is either equal to $y$ or $-y$ (due to $\Verify$ only checking the x-coordinate of $R$).
+\end{proof}
+
+Unfortunately, while trying to prove the scheme $\EUFCMAVES$ secure we found a problem: the ciphertext surreptitiously leaks the Diffie-Hellman key for the signing and encryption key.
+$Y^x = X^y$ can be computed as $(R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}}$. This clearly violates the premise of $\EUFCMAVES$ which is that nothing useful should be learned from the ciphertext, other than the signature (if it can be decrypted).
+Furthermore, it is not difficult to imagine a composability attack where an adversary, with an ElGamal encryption $(g^r, X^rm)$ of some message $m \in \G$ is able to decrypt it by requesting a signature encryption under $g^r$ from the signer, learning $X^r$ and thereby illegally learning $m$. We discuss the impact of this further after proving that the scheme cannot be $\EUFCMAVES$ secure.
+
+\begin{lemma}
+\label{ecdsa-ves-not-secure}
+There exists no \emph{key-preserving} $\EUFCMAVES$ reduction for the ECDSA one-time VES scheme if the Computational Diffie-Hellman Problem (CDH) is hard.
+\end{lemma}
+
+\newcommand{\ECDSAVES}{\hatSigma_{\text{ECDSA}}}
+\newcommand{\CDH}{\textsf{CDH}}
+\newcommand{\Sim}{\mathcal{S}}
+
+\begin{proof}
+
+  Let $\CDH(X,Y)$ for $(X,Y) \sample \G^2$ denote an instance of the CDH problem with respect to the generator $g$ of the ECDSA one-time VES\@.
+  We will prove our statement by solving $\CDH(X,Y)$ with only black-box access to a simulator $\Sim$ for the encryption oracle $E$ that must be provided to the forger in a key-preserving $\EUFCMAVES$ reduction.
+  This contradicts the existence of $\Sim$ and therefore no key-preserving $\EUFCMAVES$ reduction scheme can exist if the CDH problem is hard.
+  To solve $\CDH(X,Y)$ we run the simulator for $\Sim$ with $X$ as the signing key and then query it with an arbitrary message $m$: $(R, \hat{R}, \hat{s}, \pi) \sample \Sim(m,Y)$.
+
+  First, note that $(\hat{R},Y,R)$ must be a valid Diffie-Hellman tuple if $\Sim$ properly simulates the an encrypted signing oracle.
+  Even though $\Sim$ can simulate DLEQ proofs (by their zero knowledge property) for invalid tuples, this is not enough to simulate the view of a real forger.
+  Regardless of validity of $\pi$, a forger can make a query to $E(Y',m')$ with an encryption key-pair it has generated itself $(y',Y')$ and check that $\hat{R}^{y'} = R$ in the response.
+  If the check fails with non-negligible probability then $\Sim$ can be distinguished from the real oracle $E$ in the $\EUFCMAVES$ experiment.
+
+   Given $(\hat{R},Y,R)$ is a valid Diffie-Hellman tuple and $\hat{s} = r^{-1}(H(m) + \Rx{}x)$,  $R = Y^r$ and $X = g^x$ are true since $(R, \hat{R}, \hat{s}, \pi)$ must be a valid signature encryption, we can compute $\CDH(X,Y)$ as $(R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}}$ since:
+
+\begin{align*}
+    R^{\hat{s}} & = Y^{H(m) + \Rx{}x} &  \\
+    R^{\hat{s}}Y^{-H(m)} & =  Y^{\Rx{}x} \\
+    (R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}} & = Y^{x}
+\end{align*}
+\end{proof}
+
+The fact that this scheme leaks a Diffie-Hellman key does not necessarily mean it is useless.
+
+
+None of the schemes presented in Section~\ref{exisitng-protocols} rely on the CDH problem being hard.
+Furthermore, on a Bitcoin like ledger, signing keys for transactions are usually generated randomly within the protocol and are not shared between executions, so learning a CDH tuple in one execution cannot help an adversary break the security of another.
+Thus, as long as the protocol designer does not rely on the CDH problem being hard within their protocol the ECDSA one-time VES is practically secure.
+
+It remains to be shown that a CDH solution is the only extra information the adversary learns from the ciphertext.
+To prove this we make the CDH problem easy by giving the reduction access to a CDH oracle and show the scheme secure under this condition.
+We choose the \EUFCMA reduction to the \DLOG problem for ECDSA by Fersch et al.\cite{ecdsa-eufcma} in the \emph{bijective random oracle model} as our starting point.
+In this model, the conversation function $f$ which converts an elliptic curve point $R$ to its x-coordinate $\Rx$ is modelled as a bijective random oracle and signatures are simulated by programming it.
+We prove the following theorem in Appendix~\ref{proof-ecdsa-eufcma}.
+
+\begin{theorem}
+\label{claim-ecdsa-eufcma}
+The reduction from the discrete logarithm problem to the EUFCMA security of ECDSA in the bijective random oracle model from \cite{ecdsa-eufcma} can be transformed into a $\EUFCMAVES$ reduction for the ECDSA one-time VES if the CDH problem is easy.
+\end{theorem}
