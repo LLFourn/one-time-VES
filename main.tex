@@ -48,7 +48,9 @@
 \def\SP#1{\textsuperscript{#1}}
 \def\SB#1{\textsubscript{#1}}
 
+\newcommand{\psidr}{ \psi{}\textsf{dr}}
 \newcommand{\EUFCMA}{\textsf{EUF-CMA}\xspace}
+\newcommand{\EUFKO}{\textsf{EUF-KO}\xspace}
 \newcommand{\EUFCMAVES}{\textsf{EUF-CMA}[\textsf{VES}]\xspace}
 \newcommand{\EUFCMAVESot}{\textsf{EUF-CMA}[\textsf{VES}\textsubscript{ot}]\xspace}
 \newcommand\getsdollar{\mathrel{{\leftarrow}\vcenter{\hbox{\tiny\rmfamily\upshape\$}}}}
@@ -62,7 +64,7 @@
 \newcommand{\EncGen}{\textsf{EncGen}}
 \newcommand{\EncSign}{\textsf{EncSign}}
 \newcommand{\EncVer}{\textsf{EncVrfy}}
-
+\newcommand{\rightsample}{\hskip2.3pt{\mbox{\tiny${\$}$\normalsize}}\!\!\rightarrow\,}
 \newcommand{\DecSig}{\textsf{DecSig}}
 \newcommand{\KeyGen}{\textsf{Gen}}
 \newcommand{\Sign}{\textsf{Sign}}
@@ -92,9 +94,8 @@
 \newcommand{\hardproblem}{\mathcal{H}}
 \newcommand{\G}{\mathbb{G}}
 \newcommand{\DLOG}{\textsf{DL}\xspace}
+\newcommand{\CDH}{\textsf{CDH}\xspace}
 \newcommand{\Setup}{\textsf{Setup}}
-
-
 \begin{document}
 
 \title{One-Time Verifiably Encrypted Signatures \\ A.K.A. Adaptor Signatures}
@@ -114,13 +115,16 @@
 
 % VERIFIABLY ENCRYPTED SIGNATURES
 
-\include{ves}
-\include{one-time-ves}
-\include{schnorr}
-\include{ecdsa}
+\input{intro}
+\input{ves}
+\input{one-time-ves}
+\input{schnorr}
+\input{ecdsa}
 
 \section{Semi-Scriptless Protocols}
 \label{semi-scriptless}
+
+
 
 \newcommand{\TxFund}{\texttt{Tx}_{\textsf{fund}}}
 \newcommand{\TxRefund}{\texttt{Tx}_{\textsf{refund}}}
@@ -179,81 +183,19 @@ Having said this, semi-scriptless protocols are a practical alternative to two-p
     \item \textbf{Payment Channels \cite{poon2016bitcoin}:} The typical hash lock can be replaced with a discrete logarithm based lock which enables the privacy benefits from \cite{cryptoeprint:2018:472} other conjectured improvements\cite{lightning-dev-scriptless-scripts}.
     \item \textbf{Atomic swaps \cite{scriptless-atomic-swap}:} The secret that releases funds from the escrow transactions never appears on the ledger, unlike the existing hash constructions which make it easy to associate assets changing hands as the contracts on the ledgers share the same hash.
     \item \textbf{Discreet Log Contracts \cite{dryja2017discreet}:} The protocol can be completed in two transactions rather than three.
-\end{itemize}
+    \end{itemize}
+
+
 
 \FloatBarrier
 \bibliography{bib.bib}{}
-\bibliographystyle{unsrt}
+\bibliographystyle{unset}
 
 \appendix
-\section{ Proof for Theorem \ref{claim-ecdsa-eufcma}}
 
-\newcommand{\Ocdh}{\mathcal{O}_{\CDH}}
-\newcommand{\betarange}{\mathbb{B}}
-\newcommand{\Sdleq}{\pcalgostyle{S}_{\DLEQ}}
-
-\emph{authors note: This proof is wrong. By giving the reduction access to the
-  $\Ocdh$ oracle we implicitly make the discrete logarithm problem
-  easy\cite{Kushwaha16} making the reduction from the discrete logarithm
-  pointless. I am in the process of fixing the proof so that it no longer
-  requires such a powerful oracle and can be reduced from the discrete logarithm
-  problem with a static Diffie-Hellman oracle. Technically, this is slightly easier than the
-  usual discrete logarithm problem but still secure in practice.\cite{SDHP}}
-
-\label{proof-ecdsa-eufcma}
-As we have proved, the ECDSA one-time VES is not \EUFCMAVES secure if the CDH problem is hard. We now wish to show that if the CDH problem were easy then it would satisfy \EUFCMAVES i.e.\ leak no useful information to a forger. Thus we give our reduction access to an $\Ocdh$ oracle which when queried with $\Ocdh(X,Y)$ returns $Z$ such that (X,Y,Z) is a Diffie-Hellman tuple with respect to $g$. Additionally, in the reduction we simulate the NIZK $\DLEQ$ proof $\pi$ with $\Sdleq$.
-
-As our starting point, we take the \EUFCMA reduction for ECDSA by Fersch et al.\cite{ecdsa-eufcma} to the discrete logarithm problem. In this work, the conversion function $f:\G \rightarrow \ZZ_q$ that maps a group element to its x-coordinate mod $q$ is decomposed and idealised as an oracle. The forger must query this oracle to produce a valid forgery. During the reduction, this oracle is programmable. In more detail, $f$ is decomposed as $f = \psi \circ \Pi \circ \varphi$ where:
-
-\begin{enumerate}
-    \item $\varphi$ is an invertible 2-to-1 function mapping curve points to the domain of $\Pi$ reflecting the fact that every x-coordinate belongs to two possible group elements.
-    \item $\Pi$ is the bijective random oracle that the reduction is able to program.
-    \item $\psi$ is an invertible function that maps the range of $\Pi$ (denoted as $\betarange$)  to $\ZZ_q$.
-\end{enumerate}
-
-We sketch the simulation of the signature encryption oracle $E$ in this model below. Note that we leave out and simplify some important details for the sake of clarity and encourage the reader to review the original proof in \cite{ecdsa-eufcma} to get a full understanding of the reduction.
+\include{ecdsa_proof}
 
 
-\begin{center}
-    \fbox{
-        \begin{pchstack}
-         \procedure{$\RDL(X)$}{
-            Q \gets \emptyset; \Pi \gets \emptyset  \\
-            \pccomment{Run the reduction from \cite{ecdsa-eufcma}} \\
-            \text{...} \gets \F^{E,S}_{\EUFCMAVES}(X) \\
-        }
-        \procedure{Simulate $S(m)$}{
-            \beta \sample \betarange \\
-            \pcif (\cdot, \beta) \in \Pi: \textbf{abort} \\
-            \Rx{} \gets \psi(\beta) \\
-            s \sample \ZZ_q \\
-            R \gets (g^{H(m)}X^{\Rx})^{s^{-1}} \\
-            \alpha \gets \varphi(R) \\
-            \pcif (\alpha,\cdot) \in \Pi: \textbf{abort} \\
-            \Pi \gets \Pi \cup \{ (\alpha, \beta) \} \\
-            Q \gets Q \cup \{m\} \\
-            \pcreturn (s, \Rx)
-        }
-        \pchspace
-        \procedure{Simulate $E(Y, m)$}{
-            \beta \sample \betarange \\
-            \pcif (\cdot, \beta) \in \Pi: \textbf{abort} \\
-            \Rx{} \gets \psi(\beta) \\
-            \hat{s} \sample \ZZ_q \\
-            \hat{R} \gets (g^{H(m)}X^{\Rx})^{\hat{s}^{-1}} \\
-            R \gets \Ocdh(\hat{R}, Y) \\
-            \pi \gets \Sdleq((g, \hat{R}),(Y,R)) \\
-            \alpha \gets \varphi(R) \\
-            \pcif (\alpha,\cdot) \in \Pi: \textbf{abort} \\
-            \Pi \gets \Pi \cup \{ (\alpha, \beta) \} \\
-            Q \gets Q \cup \{m\} \\
-            \pcreturn (R, \hat{R}, \hat{s}, \pi) \\
-        }
-        \end{pchstack}
-    }
-\end{center}
-
-The fact that we can simulate $E$ with access to $\Ocdh$ without modifying the internals of $\RDL$ completes the proof.
 
 % \section{Semi-Scriptless Time-Lock Protocol}
 

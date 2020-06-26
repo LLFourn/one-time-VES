@@ -11,19 +11,21 @@
 In order circumvent the need for Schnorr signatures, which are not included in the Bitcoin protocol today, Moreno-Sanchez et al.\  developed an adaptor signature construction for the standard ECDSA signature scheme already used in Bitcoin\cite{ecdsa-scriptless-scripts}.
 It was later applied to achieve a payment channel construction with better privacy in \cite{cryptoeprint:2018:472} and an efficient tumbler in \cite{cryptoeprint:2019:589}.
 The scheme is built upon the two-party ECDSA protocol from \cite{Lindell2pECDSA}.
-We translate it into a single signer scheme in Figure~\ref{fig:ecdsa-adaptor}.
+In Figure~\ref{fig:ecdsa-adaptor} we distill it into a single signer scheme which avoids all the complexities that come with two-party ECDSA protocols.
 
-As the protocol is single signer it avoids all the complexities that come with two-party ECDSA protocols.
-It only requires requires a simple non-interactive zero knowledge proof of discrete logarithm equality, whose proving and verification algorithms we denote as $(\Pdleq,\Vdleq)$.
-When invoked as $\Pdleq((g, A),(h,B),w)$, it generates a proof of membership of the language:
+The construction works in a similar way to the Schnorr scheme: the public randomness $R$ is mutated independently of its private counterpart $r$ to include the encryption key $Y$.
+This offsets the resulting signature by the same factor.
+Unfortunately, due to the non-linear structure of ECDSA it needs a non-interactive zero knowledge proof of discrete logarithm equality so the verifier can confirm that $s$ is offset by the correct amount.
+we denote the proof generation and verification algorithms as follows $(\Pdleq,\Vdleq)$.
+Formally, When invoked as $\Pdleq((g, A),(h,B),w)$, it generates a proof of membership of the language:
 
 \newcommand{\DLEQ}{\textsf{DLEQ}\xspace}
 \[ L_{\DLEQ} = \{ (g, h, A, B) \in \G^4 \mid  \exists w \in \ZZ_q : A = g^w \land B = h^w \} \]
 
-We instantiate this proof with the Fiat-Shamir transform applied to the Sigma protocol for the relation originally from \cite{dleq-proof}.
+We instantiate this proof with the Fiat-Shamir transform applied to the Sigma protocol for the relation originally described in \cite{dleq-proof}.
 
-\newcommand{\Rx}{R_\texttt{x}}
-\newcommand{\hatRx}{\hat{R}_\texttt{x}}
+\newcommand{\Rx}{R_{\mathtt{x}}}
+\newcommand{\hatRx}{\hat{R}_\mathtt{x}}
 \newcommand{\xcoord}{f}
 
 \begin{figure}[h]
@@ -100,7 +102,9 @@ We instantiate this proof with the Fiat-Shamir transform applied to the Sigma pr
     \label{fig:ecdsa-adaptor}
 \end{figure}
 
-We now attempt to prove the scheme secure.
+We now prove the scheme secure by showing it meets our requirements of validity, recoverability and $\EUFCMAVES$.
+In the latter case, the proof is not straightforward because we must account for a weakness in the scheme.
+First we prove validity and recoverability.
 
 \begin{lemma}
 The ECDSA one-time VES is valid and unconditionally recoverable.
@@ -109,54 +113,160 @@ The ECDSA one-time VES is valid and unconditionally recoverable.
 If $\EncVer(X,Y,m,(R, \hat{R},\hat{s}, \pi)) = 1$ then $\hat{R} = (g^{H(m)}X^{\Rx})^{\hat{s}^{-1}}$ and $\hat{R}^{y} = R$ if $\pi$ is sound. Which means $\hat{R}^{y} = R = (g^{H(m)}X^{\Rx})^{\hat{s}^{-1}y}$. Therefore $\DecSig$ produces a valid signature $\sigma := (R, \hat{s}y^{-1})$ whenever $\hatsigma$ is valid except with the negligible probability that $\pi$ is unsound. If $\sigma$ is valid then $\Rec$ will always recover $\tilde{y} \gets s^{-1}\hat{s} = (\hat{s}y^{-1})^{-1}\hat{s}$, which is either equal to $y$ or $-y$ (due to $\Verify$ only checking the x-coordinate of $R$).
 \end{proof}
 
-Unfortunately, while trying to prove the scheme $\EUFCMAVES$ secure we found a problem: the ciphertext surreptitiously leaks the Diffie-Hellman key for the signing and encryption key.
-$Y^x = X^y$ can be computed as $(R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}}$. This clearly violates the premise of $\EUFCMAVES$ which is that nothing useful should be learned from the ciphertext, other than the signature (if it can be decrypted).
-Furthermore, it is not difficult to imagine a composability attack where an adversary, with an ElGamal encryption $(g^r, X^rm)$ of some message $m \in \G$ is able to decrypt it by requesting a signature encryption under $g^r$ from the signer, learning $X^r$ and thereby illegally learning $m$. We discuss the impact of this further after proving that the scheme cannot be $\EUFCMAVES$ secure.
+
+\subsection{Analysis of $\EUFCMAVES$ security}
+
+The flaw in the scheme is that each valid ciphertext surreptitiously leaks the Diffie-Hellman key between the public signing key and the encryption key i.e.\ allows the receiver to compute $X^y = Y^x$.
+At a high level, the problem arises because the value $s$ in the signature is computed through the product of $r^{-1}$ and $x$ and then $\pi$ reveals the product of $Y$ and $r$.
+The adversary can then cancel out $r$ from the picture and is left with $Y^x$.
+In detail we start with a valid ciphertext $(R, \hat{R},\hat{s}, \pi)$ on some message with signing key $X$ and encryption key $Y$.
 
 \begin{lemma}
-\label{ecdsa-ves-not-secure}
-There exists no \emph{key-preserving} $\EUFCMAVES$ reduction for the ECDSA one-time VES scheme if the Computational Diffie-Hellman Problem (CDH) is hard.
+  \label{key-leak}
+  Let $(R, \hat{R},\hat{s}, \pi)$ be a ECDSA one-time VES ciphertext.
+  If $\EncVer(X,Y,m,(R, \hat{R},\hat{s}, \pi)) = 1$, for some message $m$ and encryption key $Y$, then $\CDH(X,Y) = R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}}$.
 \end{lemma}
-
-\newcommand{\ECDSAVES}{\hatSigma_{\text{ECDSA}}}
-\newcommand{\CDH}{\textsf{CDH}}
-\newcommand{\Sim}{\mathcal{S}}
-
 \begin{proof}
-
-  Let $\CDH(X,Y)$ for $(X,Y) \sample \G^2$ denote an instance of the CDH problem with respect to the generator $g$ of the ECDSA one-time VES\@.
-  We will prove our statement by solving $\CDH(X,Y)$ with only black-box access to a simulator $\Sim$ for the encryption oracle $E$ that must be provided to the forger in a key-preserving $\EUFCMAVES$ reduction.
-  This contradicts the existence of $\Sim$ and therefore no key-preserving $\EUFCMAVES$ reduction scheme can exist if the CDH problem is hard.
-  To solve $\CDH(X,Y)$ we run the simulator for $\Sim$ with $X$ as the signing key and then query it with an arbitrary message $m$: $(R, \hat{R}, \hat{s}, \pi) \sample \Sim(m,Y)$.
-
-  First, note that $(\hat{R},Y,R)$ must be a valid Diffie-Hellman tuple if $\Sim$ properly simulates the an encrypted signing oracle.
-  Even though $\Sim$ can simulate DLEQ proofs (by their zero knowledge property) for invalid tuples, this is not enough to simulate the view of a real forger.
-  Regardless of validity of $\pi$, a forger can make a query to $E(Y',m')$ with an encryption key-pair it has generated itself $(y',Y')$ and check that $\hat{R}^{y'} = R$ in the response.
-  If the check fails with non-negligible probability then $\Sim$ can be distinguished from the real oracle $E$ in the $\EUFCMAVES$ experiment.
-
-   Given $(\hat{R},Y,R)$ is a valid Diffie-Hellman tuple and $\hat{s} = r^{-1}(H(m) + \Rx{}x)$,  $R = Y^r$ and $X = g^x$ are true since $(R, \hat{R}, \hat{s}, \pi)$ must be a valid signature encryption, we can compute $\CDH(X,Y)$ as $(R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}}$ since:
-
-\begin{align*}
-    R^{\hat{s}} & = Y^{H(m) + \Rx{}x} &  \\
+  Since $\hat{s} = r^{-1}(H(m) + \Rx{}x)$ and $R = Y^r$ we can compute $Y^x$ as follows:
+  o\begin{align*}
+    R^{\hat{s}} & = Y^{H(m) + \Rx} &  \\
     R^{\hat{s}}Y^{-H(m)} & =  Y^{\Rx{}x} \\
     (R^{\hat{s}}Y^{-H(m)})^{\Rx^{-1}} & = Y^{x}
-\end{align*}
+  \end{align*}
 \end{proof}
 
-The fact that this scheme leaks a Diffie-Hellman key does not necessarily mean it is useless.
+
+\newcommand{\SDH}{\textsf{SDH}}
+\newcommand{\DLSDH}{\DLOG_{\OSDH}}
+\newcommand{\QDLSDH}{\text{-}\DLSDH}
+\newcommand{\OSDH}{\mathcal{O}_{\SDH}}
 
 
-None of the schemes presented in Section~\ref{exisitng-protocols} rely on the CDH problem being hard.
-Furthermore, on a Bitcoin like ledger, signing keys for transactions are usually generated randomly within the protocol and are not shared between executions, so learning a CDH tuple in one execution cannot help an adversary break the security of another.
-Thus, as long as the protocol designer does not rely on the CDH problem being hard within their protocol the ECDSA one-time VES is practically secure.
+This clearly violates the spirit of $\EUFCMAVES$ which is that nothing useful should be learned from the ciphertext, other than the signature (if it can be decrypted).
+To demonstrate the fidelity of our formal definitions to this idea we show there is no $\EUFCMAVES$ reduction for it
 
-It remains to be shown that a CDH solution is the only extra information the adversary learns from the ciphertext.
-To prove this we make the CDH problem easy by giving the reduction access to a CDH oracle and show the scheme secure under this condition.
-We choose the \EUFCMA reduction to the \DLOG problem for ECDSA by Fersch et al.\cite{ecdsa-eufcma} in the \emph{bijective random oracle model} as our starting point.
-In this model, the conversation function $f$ which converts an elliptic curve point $R$ to its x-coordinate $\Rx$ is modelled as a bijective random oracle and signatures are simulated by programming it.
-We prove the following theorem in Appendix~\ref{proof-ecdsa-eufcma}.
+\begin{lemma}
+  There is no \emph{key-preserving} reduction from $\DLOG$ to the $\EUFCMAVES$ security of the ECDSA one-time VES if the $\CDH$ problem is hard.
+\end{lemma}
+\begin{proof}[Proof Sketch]
+  Observe that any key preserving $\DLOG$ reduction must simulate the encryption oracle $E$ without the secret key $x$.
+  Note that it is not enough for this simulator to just return two random group elements $(\hat{R}, R)$ and simulate the proof $\pi$ to make them appear valid with respect to a query for an encryption under $Y$.
+  We can easily catch this behaviour by querying the simulator on key $Y'$ such that we know the secret key $y'$ and checking that $\hat{R}^y = R$.
+  Thus since the simulator must return valid ciphertexts and from valid ciphertexts the Diffie-Hellman key can be extracted (as shown above) the simulator must not exist if $\CDH$ problem is hard.
+  If no simulator exists then no key-preserving reduction can exist.
+\end{proof}
+
+
+Since we believe this scheme is useful we will now attempt to salvage it by formally capturing the flaw and prove it secure in a weaker model.
+The problem for the reduction above is that by providing the signature encryption oracle you are also providing what is referred to by Brown et al.\ as a \emph{static Diffie-Hellman} oracle\cite{SDHP} i.e. an oracle that will return $Y^x$ for some fixed $x$ on a query for $Y$.
+Such an oracle can obviously not be simulated if the \CDH problem is hard. %TODO: It is strongly implied that it is hard.
+Our solution to this conundrum is to give our reduction access to such an oracle, denoted as $\OSDH$, and to show a reduction from $\DLOG$ in this model.
+Formally, our reduction is from the following weaker version of the $\DLOG$ problem.
+Note we do not give $\adv$ a the group element for which is must find the discrete logarithm as in the typical $\DLOG$ experiment since it may simply query $\OSDH(g)$ to get any particular instance of a discrete logarithm problem with respect to any $g$.
+
+\begin{definition}[Discrete log with static Diffie-Hellman oracle problem]
+  An algorithm $\adv$ solves the $u\QDLSDH$ problem in a group $\G$ if the following experiment outputs 1 and $\adv$ makes $u$ or less queries to $\OSDH$.
+  \begin{center}
+    \fbox{
+      \begin{pchstack}
+      \procedure{$\DLSDH$}{
+        x \sample \ZZ_q \\
+        x^* \sample \adv^{\OSDH} \\
+        \pcreturn  x^* \stackrel{?}{=} x
+      }
+      \pchspace
+      \procedure{$\OSDH(Y)$}{
+        \pcreturn Y^x
+      }
+      \end{pchstack}
+    }
+  \end{center}
+\end{definition}
+
+Using $u\QDLSDH$ instead of $\DLOG$ in our $\EUFCMAVES$ reduction means it no longer proves that ciphertexts contain no useful information for an adversary, but instead, that the Diffie-Hellman key $Y^x$ is the only extra thing that can be extracted from a ciphertext.
+Note that the existing protocols that use ECDSA adaptor signatures sidestep this issue in their simulation based proofs by making any receiver of the signature encryption prove knowledge of the decryption key.
+Obviously if they already know the decryption key $y$ then they can compute $X^y = Y^x$ without help from the signer.
+We seek to prove the scheme secure without proofs of knowledge since it may not always be practical to provide such a proofs and it complicates the application of the scheme.
+This security model allows us to prove the scheme secure but means we must make the following considerations whenever it is employed.
+
+Firstly, when proving a protocol secure that uses the scheme, any time the adversary learns a ciphertext they should also be given the Diffie-Hellman key $Y^x$.
+This prevents accidentally proving a scheme secure that, for example, uses a key as both an ElGamal encryption key and to create ECDSA encrypted signatures.
+Practically, this issue is not as severe as it seems as none of protocols presented in Section~\ref{exisitng-protocols} are based on Diffie-Hellman problems.
+Furthermore, on a Bitcoin like ledger, signing keys for transactions are usually generated randomly within the protocol and are not shared between executions, so learning a Diffie-Hellman key in one execution cannot help an adversary break the security of another.
+
+Secondly, the scheme is only as secure as $\DLSDH$ which is a strictly easier problem than $\DLOG$.
+The reason that $\DLSDH$ is easier is that the $\OSDH$ oracle actually helps the adversary break $\DLOG$ in a very subtle and unexpected way.
+As shown by Brown et al.\cite{SDHP} it is possible to use $\OSDH$ to assist in computing the discrete logarithm of the static key (i.e the public signing key).
+The attack works by querying $\OSDH$ with the static key itself and thereby learning non-linear functions of the static secret key \emph{in the exponent} e.g. a query for the static key $X = g^x$ returns $g^{x^2}$ and then querying with that result returns $g^{x^3}$ and so on.
+In the next section, we give a fuller description of the attack and estimate how hard the $u\QDLSDH$ problem is for different values $u$.
+
+To make our security claim we bound the adversary against the ECDSA one-time VES by the difficulty of solving $u\QDLSDH$.
+As in the case of our Schnorr proof we use an existing $\EUFCMA$ reduction as our starting point.
+The work of Fersch et al.\cite{ecdsa-eufcma} meticulously capture the $\EUFCMA$ security of ECDSA in a \emph{bijective random oracle model} by showing a reduction from the $\DLOG$.
+Their reduction also shows the security of ECDSA relies on particular properties of the message hash function $H$.
+We ignore this aspect of the reduction to focus on the relative advantage against $\DLOG$ but they can be thought of as implicit in the bounds function $B$ below.
+In the ECDSA bijective random oracle model, the conversation function $f$ which converts an elliptic curve point $R$ to its modulo $q$ reduced x-coordinate $\Rx$ is modelled as a bijective random oracle and signatures are simulated by programming it.
+As in the case of Schnorr, our approach is to modify the signature simulator to be a signature encryption simulator except that in this case we require the assistance of $\OSDH$.
+We provide more details of the reduction prove the following theorem in Appendix~\ref{proof-ecdsa-eufcma}.
 
 \begin{theorem}
-\label{claim-ecdsa-eufcma}
-The reduction from the discrete logarithm problem to the EUFCMA security of ECDSA in the bijective random oracle model from \cite{ecdsa-eufcma} can be transformed into a $\EUFCMAVES$ reduction for the ECDSA one-time VES if the CDH problem is easy.
+  Let $\F$ $(\tau,Q_E,Q_\Pi,\epsilon)$-break the $\EUFCMAVES$ security of ECDSA.
+  Then if $\Pi$ is modelled as a random oracle there exists an adversary
+  that $(\tau_{\psidr},\epsilon_{\psidr})$-breaks the $\psi$-relative division resistance of $H$, an adversary that $(\tau_{\textsf{cr}}, \epsilon_{\textsf{cr}})$-breaks collision resistance of $H$ and inverters that $(\tau', \epsilon', Q_E + 1)$-break and $(\tau'', \epsilon'', Q_E + 1)$-break, respectively, $\DLSDH$ in $\G$ such that
+
+  \[ \epsilon \leq \sqrt{2Q_{\Pi}^2\epsilon_{\psidr} + 2Q_{\Pi}\epsilon' } + \epsilon'' + Q_{\Pi}^2/2^L + \epsilon_{\textsf{cr}} + \frac{3QQ_E}{(q-1)/2-Q}  \]
+
+  \hfill \break and $\tau_{\psidr} = \tau' = 2\tau + O(Q_E) + O(Q_{\Pi})$, $\tau'' = \tau + O(Q_{E})+ O(Q_{\Pi})$, $\tau_{\textsf{cr}} = \tau + O(Q_E)$ and $u = Q_E + 1$.
+
+
 \end{theorem}
+
+Simply stated, in the bijective random oracle model, one can break $u\QDLSDH$ with a $\EUFCMAVES$ forger if one can break $\DLOG$ with a $\EUFCMA$ forger.
+The reduction of Fersh et al.\, and therefore our transformed reduction, loses a factor of $Q_{\Pi}$ and the square of the advantage i.e ignoring other terms $B(\epsilon', Q_S, Q_{\Pi}) \approx \sqrt{\epsilon'Q_{\Pi}}$.
+
+\subsection{Hardness of $u\QDLSDH$ in secp256k1}
+
+To show the scheme is practical we now give concrete estimates of how difficult $\DLSDH$ problem should is within the secp256k1 elliptic curve group used for ECDSA on Bitcoin.
+The basis for our estimates is the work of Brown et al.\cite{SDHP} who show the best known algorithm for solving $u\QDLSDH$.
+It does so in $O(\sqrt{q/u})$ time where $q$ is the order of the group.
+The algorithm is based on the idea that if we suppose the order of $Z^*_q$ is divisible by $u$ (or some value less than $u$) and so $uv = q-1$ for some $v$, then there are subgroups of $Z^*_q$ order $u$ and $v$ since they both divide the order.
+Simplifying a bit, the attack splits the problem of finding the discrete logarithm $x$ into finding the discrete logarithm of two smaller components of $x$ in the subgroups of order $u$ and $v$.
+To this end the attacker queries the oracle $u$ times to compute $g^{x^{u}}$ which allows it to work in the subgroup of order $v$ where it solves the smaller $\DLOG$ problem using a modified baby-step-giant-step algorithm.
+From there, they do the same for the subgroup of order $u$ and combine the results to finally produce the discrete logarithm.
+
+In addition to $u$ oracle queries the algorithm requires $n = 2(\sqrt{u} + \sqrt{v})$ scalar multiplications in $\G$ to finally output the discrete logarithm with certainty.
+Treating the oracle queries and scalar multiplications as equal, the algorithm has an optimal running time of approximately $3\sqrt[3]{q}$ where $u = \sqrt[3]{q}$.
+Since the main and likely only application of this scheme will be to Bitcoin's ECDSA signature we provide concrete estimates for the amount of computation needed to run this algorithm in secp256k1 in Figure~\ref{fig:sdh_alg_time}.
+As expected, the table shows the optimal value for $u$ (treating scalar multiplications between the attacker and the oracle as equal) is $~2^{84} \approx \sqrt[3]{q}$ which gives $n \approx ~2^{86}$.
+Smaller and more plausible values for $u$, e.g. $u \approx 2^{24} \approx$ 16 million give $n \approx 2^{116}$ which means it is only a minor improvement on the generic algorithms for solving $\DLOG$ in elliptic curve groups which takes $\sqrt{q} \approx 2^{128}$ group operations.
+
+\begin{figure}[h]
+  \centering
+  \[ q = 2^6 \times 3 \times 149 \times 631 \times 107361 793816 595537 \times 174 723607 534414 371449 \times 341 948486 974166 000522 343609 283189  \]
+ \begin{tabular}{||c c c c||}
+ \hline
+ $\geq \log_2u $ & $\floor{\log_2u}$ & $\floor{\log_2n}$ & Factorization of $u$ \\ [0.5ex]
+ \hline\hline
+  * & 84 & 86 & $2 \times 149 \times 631 \times 174723607534414371449$ \\
+  \hline
+  80 & 80 & 88 & $2^2 \times 3 \times 631 \times 174723607534414371449$ \\
+  \hline
+  70 & 70 & 93 & $2^3 \times 174723607534414371449$ \\
+  \hline
+  60 & 60 & 98 & $2^2 \times 3 \times 107361793816595537$ \\
+  \hline
+  50 & 24 & 116 & $2^6 \times 3 \times 149 \times 631$ \\ [1ex]
+  \hline
+ \hline
+\end{tabular}
+\caption{The optimal number of scalar multiplications $n$ required in secp256k1 for each upper bound on the bit length of $u$ static Diffie-Hellman oracle queries to solve the $u\QDLSDH$ problem}
+\label{fig:sdh_alg_time}
+\end{figure}
+
+To be confident that the ECDSA one-time VES can be used in practice we provide support for two final claims: (i) the above algorithm approximates the optimal algorithm for recovering a discrete logarithm with acess to $\OSDH$ and (ii) there is no ancillary advantage a ECDSA forger can get from $\OSDH$ other than using it to recover the discrete logarithm of the signing key.
+To support the first claim we refer the reader to the work of Boneh and Boyen \cite{BBSig} that shows no generic algorithm can improve upon the complexity of the above algoirthm.
+Specifically they prove a lower time bound of $\Omega(\sqrt{q/u})$  where $u < \sqrt[3]{q}$ for any generic adversary against the \emph{Strong Diffie-Hellan} problem which implies the same lower bound for $\DLSDH$.
+The second claim is likely to be true since no analysis of ECDSA thus far has shown any relationship to the difficulty of forging signatures to any Diffie-Hellman type problem.
+If we are accept these two propositions, then the scheme is secure for use in Bitcoin as it is today.
+For perspective on the security loss, currently the only practical way to use Bitcoin script is to use \emph{pay-to-script-hash} type outputs which commit to script based spending rules with a 160-bit hash and thus only provide 80 bits of collision resistance.
+Furthermore, We stress that we propose this scheme as a short term solution until Schnorr signatures are included in the Bitcoin protocol which also enables the Schnorr one-time VES.

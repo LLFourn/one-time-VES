@@ -1,0 +1,108 @@
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:
+
+\section{ Proof for Theorem \ref{claim-ecdsa-eufcma}}
+\label{proof-ecdsa-eufcma}
+\newcommand{\psidomain}{\mathbb{B}}
+\newcommand{\phirange}{\mathbb{A}}
+\newcommand{\Sdleq}{\mathcal{S}_{\DLEQ}}
+\newcommand{\B}{\mathcal{B}}
+
+To prove our theorem, we show that when the signature oracle $S$ from the reduction by Fersh et al\. is replaced by a signature encryption oracle $E$ it becomes a $\EUFCMAVES$ reduction from the $u\QDLSDH$ problem where $u$ is the number of queries to $E$ plus 1.
+
+First we give more thorough description of the original reduction.
+Fersh et al\. decomposed and idealize the conversion function $f:\G \rightarrow \ZZ_q$ that maps a group element to its x-coordinate mod $q$ as a random oracle.
+The forgery queries the oracle and eventually outputs a forgery with some probability.
+To solve a an instance of $\DLOG$ the reduction programs the oracle and rewinds the successful forger to attempt to get it to produce two signatures with different values for $\Rx = f(R)$ but the same value for $R$ in the typical ``forking lemma''.
+In more detail, $f$ is decomposed as $f = \psi \circ \Pi \circ \varphi$ where:
+
+\begin{enumerate}
+    \item $\varphi: \G \rightarrow \phirange$ is an invertible 2-to-1 function mapping curve points to the domain of $\Pi$ reflecting the fact that every x-coordinate belongs to two possible group elements.
+    \item $\Pi: \phirange \rightarrow \psidomain$ is the bijective random oracle that the reduction is able to program.
+    \item $\psi: \psidomain \rightarrow \ZZ_q$ is an invertible function that maps the range of $\Pi$ to $\ZZ_q$.
+    \end{enumerate}
+
+\begin{theorem}
+  Let $\F$ $(\tau,Q_s,Q_\Pi,\epsilon)$-break the \EUFCMA security of ECDSA.
+  Then if $\Pi$ is modelled as a random oracle there exists an adversary
+  that $(\tau_{\psidr},\epsilon_{\psidr})$-breaks the $\psi$-relative division resistance of $H$, an adversary that $(\tau_{\textsf{cr}}, \epsilon_{\textsf{cr}})$-breaks collision resistance of $H$ and inverters that $(\tau', \epsilon')$-break and $(\tau'', \epsilon'')$-break, respectively, $\DLOG$ in $\G$ such that
+
+  \[ \epsilon \leq \sqrt{2Q_{\Pi}^2\epsilon_{\psidr} + 2Q_{\Pi}\epsilon' } + \epsilon'' + Q_{\Pi}^2/2^L + \epsilon_{\textsf{cr}} + \frac{3QQ_s}{(q-1)/2-Q}  \]
+
+  \hfill \break and $\tau_{\psidr} = \tau' = 2\tau + O(Q_s) + O(Q_{\Pi})$, $\tau'' = \tau + O(Q_{s})+ O(Q_{\Pi})$ and $\tau_{\textsf{cr}} = \tau + O(Q_s)$.
+
+
+
+\end{theorem}
+
+Thus our theorem begins as follows
+
+\begin{theorem}
+  Let $\F$ $(\tau,Q_E,Q_\Pi,\epsilon)$-break the $\EUFCMAVES$ security of ECDSA.
+  Then if $\Pi$ is modelled as a random oracle there exists an adversary
+  that $(\tau_{\psidr},\epsilon_{\psidr})$-breaks the $\psi$-relative division resistance of $H$, an adversary that $(\tau_{\textsf{cr}}, \epsilon_{\textsf{cr}})$-breaks collision resistance of $H$ and inverters that $(\tau', \epsilon')$-break and $(\tau'', \epsilon'')$-break, respectively, $u\QDLSDH$ in $\G$ such that
+
+  \[ \epsilon \leq \sqrt{2Q_{\Pi}^2\epsilon_{\psidr} + 2Q_{\Pi}\epsilon' } + \epsilon'' + Q_{\Pi}^2/2^L + \epsilon_{\textsf{cr}} + \frac{3QQ_E}{(q-1)/2-Q}  \]
+
+  \hfill \break and $\tau_{\psidr} = \tau' = 2\tau + O(Q_E) + O(Q_{\Pi})$, $\tau'' = \tau + O(Q_{E})+ O(Q_{\Pi})$, $\tau_{\textsf{cr}} = \tau + O(Q_E)$ and $u = Q_E + 1$.
+
+
+\end{theorem}
+
+To begin our reduction to $u\QDLSDH$ we first query $X \gets \OSDH(g)$, which gives us the notional public key $X$ that the signature forger would see in a real experiment.
+The reduction then carries on exactly as in the original by activating the forger with $X$ and responding to its oracle queries except that the signature oracle $S$ is replaced with an signature encryption oracle $E$.
+
+For each query to $E(Y,m)$ we must return $(R,\hat{R}, \hat{s}, \pi)$ such that the ciphertext is valid and $\hat{R}^y = R$ where $Y = g^y$.
+The latter requirement is not straightforward since the simulator does not know the discrete logarithms of $\hat{R}$ and $R$ and does not know $y$.
+The trick here is to query $\OSDH$ with $Y$ to figure out $X^y$ reverse the operations from Lemma~\ref{key-leak} to compute $R$ and $\hat{R}$ correctly.
+Once we have a well formed $(\hat{R}, R)$ we run the simulator for $\Pdleq$ which we denote $\Sdleq$ to create $\pi$ without the witness $y$ (which we have access to due to its zero knowledge property).
+We depict the simulation of the signature encryption oracle $E$ along side the signature oracle $S$ of the original reduction below.
+
+\begin{center}
+    \fbox{
+        \begin{pchstack}
+        \procedure{Simulate $S(m)$}{
+            \beta \sample \psidomain \\
+            \pcif (\cdot, \beta) \in \Pi: \textbf{abort} \\
+            \Rx{} \gets \psi(\beta) \\
+            s \sample \ZZ_q \\
+            u_1 \gets H(m)s^{-1} \\
+            u_2 \gets \Rx{}s^{-1} \\
+            R \gets g^u_1X^{u_2} \\
+            \alpha \gets \varphi(R) \\
+            \pcif (\alpha,\cdot) \in \Pi: \textbf{abort} \\
+            \Pi \gets \Pi \cup \{ (\alpha, \beta) \} \\
+            Q \gets Q \cup \{m\} \\
+            \pcreturn (s, \Rx)
+        }
+        \pchspace
+        \procedure{Simulate $E(Y, m)$}{
+            \beta \sample \psidomain \\
+            \pcif (\cdot, \beta) \in \Pi: \textbf{abort} \\
+            \Rx{} \gets \psi(\beta) \\
+            \hat{s} \sample \ZZ_q \\
+            Z \gets \OSDH(Y) \\
+            u_1 \gets H(m)\hat{s}^{-1} \\
+            u_2 \gets \Rx{}\hat{s}^{-1} \\
+            R \gets Z^{u_1}Y^{u_2} \\
+            \hat{R} \gets X^{u_1}g^{u_2} \\
+            \pi \gets \Sdleq((g, \hat{R}),(Y,R)) \\
+            \alpha \gets \varphi(R) \\
+            \pcif (\alpha,\cdot) \in \Pi: \textbf{abort} \\
+            \Pi \gets \Pi \cup \{ (\alpha, \beta) \} \\
+            Q \gets Q \cup \{m\} \\
+            \pcreturn (R, \hat{R}, \hat{s}, \pi) \\
+        }
+        \end{pchstack}
+    }
+  \end{center}
+
+Observe that the probability of the simulator for $E$ aborting per query is the same as for the simulator for $S$.
+
+Note that we leave out and several details to focus on the simulation of $E$ which is the only relevant part for proving our theorem.
+
+
+
+for the sake of clarity and encourage the reader to review the original proof in \cite{ecdsa-eufcma} to get a full understanding of the reduction.

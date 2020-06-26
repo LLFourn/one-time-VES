@@ -73,7 +73,9 @@ What we call the Schnorr one-time VES was introduced by Poelstra \cite{poelstra2
     \label{fig:schnorr-ves}
 \end{figure}
 
-Since the $\EncSign$ algorithm is a simple tweak of the sign algorithm it is easy to get an intuition for the security of the scheme. Unsurprisingly, we find that the scheme is unconditionally valid and recoverable and is \EUFCMAVES secure. We now formally prove these properties.
+Since the $\EncSign$ algorithm is a simple tweak of the sign algorithm it is easy to get an intuition for the security of the scheme.
+Unsurprisingly, we find that the scheme is unconditionally valid and recoverable and is \EUFCMAVES secure.
+We now formally prove these properties.
 
 \begin{lemma}
 The Schnorr one-time VES is unconditionally valid and recoverable.
@@ -85,23 +87,20 @@ The Schnorr one-time VES is unconditionally valid and recoverable.
 By the same token, the scheme is recoverable because $\Rec((\hat{R}Y, \hat{s} + y)), \hat{s})$ always returns the decryption key $y = s - \hat{s}$.
 \end{proof}
 
-
 \begin{theorem}
-The Schnorr one-time VES is \EUFCMAVES secure.
+  If the Schnorr signature scheme is $(\tau,\epsilon,Q_H + Q_E)$-$\EUFKO$ secure in the random oracle model then the Schnorr one-time VES is $(\tau', \epsilon', Q_H, Q_E)$-$\EUFCMAVES$ secure where
+
+  \[ \epsilon' \leq 4\epsilon + \frac{Q_HQ_E}{\abs{\G}}, \tau' \approx \tau \]
+
+  and $Q_H,Q_E$ is the upper bound on the random oracle queries and signature encryption queries respectively in the $\EUFCMAVES$ experiment.
 \end{theorem}
 
 \begin{proof}
-  We transform the standard Schnorr reduction from the \DLOG problem to the \EUFCMA security of Schnorr signatures in the random oracle model by Pointcheval and Stern\cite{pointcheval2000security} into a \EUFCMAVES reduction by simulating the additional signature encryption oracle $E$.
-  Note the original reduction was not did not key-prefixed but the same reduction can be applied to key-prefixed Schnorr. Our reduction $\RDL$ simulates $E$ by programming the random oracle $H$ in a similar way to how it usually simulates the signing oracle $S$ as shown below:
+  The bound stated above identical the one presented by Kiltz et al. \cite{optimalsecschnorr} in Lemma 3.10 for $\EUFCMA$ except with the number of signature queries $Q_S$ to $S$ replaced with the number of signature encryption queries $Q_E$ to $E$.
+  This is the correct bound since we can simulate $E$ in the same way as $S$ is usually simulated.
 
 \begin{center}
   \fbox{%
-%     \begin{pchstack}[center]
-        \procedure{$\RDL(X)$}{
-           \pccomment{Run the reduction from \cite{pointcheval2000security}} \\
-           \text{...} \gets \F^{E,S}_{\EUFCMAVES}(X) \\
-        }
-        \pchspace
         \procedure{Simulate $S(m)$}{
             s,c \sample \ZZ_q \\
             R \gets g^sX^{-c} \\
@@ -120,9 +119,10 @@ The Schnorr one-time VES is \EUFCMAVES secure.
              \t \pcreturn (\hat{R},\hat{s}) \\
              \pcelse \textbf{abort} \\
         }
-%    \end{pchstack}
     }
   \end{center}
 
-The fact that we can efficiently simulate $E$ without changing the internals of $\RDL$ completes the proof.
+  Observe that the probability of the $E$ aborting is identical to that of $S$. Although $R$ is calculated differently it is distributed identically.
+  $E$ runs in the same time as $S$ except for one extra group operation.
+  Thus, assuming the bound from Kiltz et al.\ is correct, replacing $S$ with $E$ yields the same bound on the advantage of a $\EUFCMAVES$ forger except with $Q_S$ replaced with $Q_E$.
 \end{proof}
