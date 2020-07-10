@@ -87,42 +87,52 @@ The Schnorr one-time VES is unconditionally valid and recoverable.
 By the same token, the scheme is recoverable because $\Rec((\hat{R}Y, \hat{s} + y)), \hat{s})$ always returns the decryption key $y = s - \hat{s}$.
 \end{proof}
 
+To prove $\EUFCMAVES$ security we start with an existing $\EUFCMA$ reduction and apply the simulator substitution lemma to preserve the reduction against adversaries with access an encrypted signature oracle instead.
+Pointcheval and Stern\cite{pointcheval2000security} provided the original ``forking lemma'' \EUFCMA security proof for Schnorr signatures that reduced from $\DLOG$ to its $\EUFKO$ security which they then reduced to its $\EUFCMA$ security.
+The simulator for $S$ used in the proof below is the black-box version of the simulation in the original reduction.
+
 \begin{theorem}
-  If the Schnorr signature scheme is $(\tau,\epsilon,Q_H + Q_E)$-$\EUFKO$ secure in the random oracle model then the Schnorr one-time VES is $(\tau', \epsilon', Q_H, Q_E)$-$\EUFCMAVES$ secure where
 
-  \[ \epsilon' \leq 4\epsilon + \frac{Q_HQ_E}{\abs{\G}}, \tau' \approx \tau \]
+  Let $\R$ be a reduction to the $\EUFCMA$ security of the Schnorr signature scheme in the random oracle model which uses the signature simulator $\Sim_S$ as below.
+  If $\R$ shows that the Schnorr signature scheme is at least $(\tau,\e,Q_S,Q_H)$-$\EUFCMA$ secure then the Schnorr one-time VES is at least $(\tau',\e,Q_E,Q_H)$-$\EUFCMAVES$ secure where
 
-  and $Q_H,Q_E$ is the upper bound on the random oracle queries and signature encryption queries respectively in the $\EUFCMAVES$ experiment.
+  \[ Q_E = Q_S, \tau' = \tau -  Q_S^*\tau_\G \]
+
+  \hfill \break and $\tau_{\G}$ is the time for a group operation and $Q_S^*$ is the number of times $\R$ executes $\Sim_S$.
 \end{theorem}
 
-\begin{proof}
-  The bound stated above identical the one presented by Kiltz et al. \cite{optimalsecschnorr} in Lemma 3.10 for $\EUFCMA$ except with the number of signature queries $Q_S$ to $S$ replaced with the number of signature encryption queries $Q_E$ to $E$.
-  This is the correct bound since we can simulate $E$ in the same way as $S$ is usually simulated.
 
-\begin{center}
+\begin{proof}
+
+  In the random oracle model, the Schnorr signature oracle $S$ (for $\EUFCMA$) and encrypted signature oracle $E$ (for $\EUFCMAVES$) can be black box simulated by the algorithms $(\Sim_S, \Sim_E)$ below.
+  $\Sim_S$ is an adapted version of the original simulator which does not program the random oracle or abort itself but rather returns how the random oracle should be programmed in its returned advice $\radvice := ((R,X,m),c)$ and lets the reduction decide whether to abort.
+  Clearly $\Sim_E$ perfectly simulates the view of the $\EUFCMAVES$ forger.
+
+  \begin{center}
   \fbox{%
-        \procedure{Simulate $S(m)$}{
-            s,c \sample \ZZ_q \\
+    \procedure{$\Sim_S(\pkSign := \advice, (m) := \query_S)$}{
+            X := \pkSign \\
+            s,c \sample \ZZ_q^2 \\
             R \gets g^sX^{-c} \\
-            \pcif H(R || X || m) = \bot \pcthen \\
-             \t H(R || X || m) := c \\
-             \t \pcreturn (R,s) \\
-            \pcelse \textbf{abort} \\
+            \radvice := ((R,X,m),c) \\
+            \rquery := (R,s) \\
+            \pcreturn (\radvice, \rquery)
         }
         \pchspace
-        \procedure{Simulate $E(\pkEnc, m)$}{
-             Y := \pkEnc \\
-             \hat{s},c \sample \ZZ_q \\
-             \hat{R} \gets g^{\hat{s}}X^{-c}; R \gets \hat{R}Y \\
-             \pcif H(R || X || m) = \bot \pcthen \\
-             \t H(R || X || m) := c \\
-             \t \pcreturn (\hat{R},\hat{s}) \\
-             \pcelse \textbf{abort} \\
+        \procedure{$\Sim_E(\pkSign := \advice, (\pkEnc,m) := \query_E)$}{
+             X := \pkSign; Y := \pkEnc \\
+             \hat{s},c \sample \ZZ_q^2 \\
+             \hat{R} \gets g^{\hat{s}}X^{-c} \\
+             R \gets \hat{R}Y \\
+             \radvice := ((R,X,m), c)\}  \\
+             \rquery := (\hat{R},\hat{s}) \\
+             \pcreturn (\radvice, \rquery)
         }
     }
   \end{center}
 
-  Observe that the probability of the $E$ aborting is identical to that of $S$. Although $R$ is calculated differently it is distributed identically.
-  $E$ runs in the same time as $S$ except for one extra group operation.
-  Thus, assuming the bound from Kiltz et al.\ is correct, replacing $S$ with $E$ yields the same bound on the advantage of a $\EUFCMAVES$ forger except with $Q_S$ replaced with $Q_E$.
+  These two oracle simulators are substitutable as per Lemma~\ref{oracle-sub} which requires that for all possible $(\advice, \query_E)$ there must a $\query_S$ such that $\radvice$ is distributed identically between them.
+  This is clearly the case here since for any value of $\query_S$ will produce $\radvice := ((R,X,m), c)$ will the same distribution as any $\query_E$ for any $\advice$.
+  Clearly $\Sim_E$ runs in the same time as $\Sim_S$ except for one extra group operation so the substitution means the reduction loses $Q_S^*\tau_{\G}$ time.
+  Note that for the typical reduction\cite{pointcheval2000security} from the $\EUFKO$ security of Schnorr $Q_S^* = Q_S$.
 \end{proof}

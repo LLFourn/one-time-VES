@@ -32,19 +32,127 @@ The concrete signature schemes we deal with (Schnorr and ECDSA) are based on the
 
 \subsection{Signature Schemes}
 
-\begin{defintion}[Signature Scheme]
-  \label{signature_scheme}
+% \begin{defintion}azs
+%   \label{signature_scheme}
 
-  A signature scheme $\Sigma$ is made up of three algorithms $(\SIGNALG)$:
+%   A signature scheme $\Sigma$ is made up of three algorithms $(\SIGNALG)$:
 
-  \begin{itemize}
-  \item $\KeyGen \rightsample (\skSign, pkSign)$: A signing key-pair generation algorithm, which randomly generates a secret signing key $\skSign$ and a public verification key $\pkSign$.
-  \item $\Sign(\skSign, m) \rightarrow \sigma$: A possibly probabilistic signing algorithm that when given a message and the secret signing key $\skSign$ returns a signature $\sigma$.
-  \item $\Verify(\pkSign, m, \sigma) \rightarrow \bin$: A deterministic signature verification algorithm that outputs 1 only if the signature $\sigma$ is valid against the public signature verification key $\pkSign$.
-  \end{itemize}
+%   \begin{itemize}
+%   \item $\KeyGen \rightsample (\skSign, pkSign)$: A signing key-pair generation algorithm, which randomly generates a secret signing key $\skSign$ and a public verification key $\pkSign$.
+%   \item $\Sign(\skSign, m) \rightarrow \sigma$: A possibly probabilistic signing algorithm that when given a message and the secret signing key $\skSign$ returns a signature $\sigma$.
+%   \item $\Verify(\pkSign, m, \sigma) \rightarrow \bin$: A deterministic signature verification algorithm that outputs 1 only if the signature $\sigma$ is valid against the public signature verification key $\pkSign$.
+%   \end{itemize}
 
-\end{defintion}
+% \end{defintion}
 
-\begin{defintion}[\EUFCMA] {
-    A signature scheme $(\epsilon \tau, Q_s)$-\EUFCMA secure for all adversaries $\adv$ making $\$
-}
+% \begin{defintion}[\EUFCMA] {
+%     A signature scheme $(\epsilon \tau, Q_s)$-\EUFCMA secure for all adversaries $\adv$ making
+% }
+
+\subsection{Cryptographic Reductions}
+
+% A reduction describes a machine $\R$ that attempts to solve some hard problem $\hardproblem$ by invoking another machine $\adv$ that solves some problem $\hardproblem^\adv$.
+% If we can show that an $\R$ exists that solves $\hardproblem$ with at least some probability $\epsilon$ and at most some time $\tau$ then the difficulty of $\hardproblem^\adv$ must
+
+% The description of $\hardproblem^\adv$ will often allow $\adv$ to make \emph{oracle queries} to the challenger.
+% In the reduction, $\R$ is the challenger so it must answer these queries in a way that is indistinguishable from an ordinary challenger.
+% To do this $\R$ must keep some state which we denote as $\st$ in-between invocations.
+% When $\R$ receives an query to an oracle $A$ it forwards it to some \emph{simulator} $\Sim_A$ for the oracle.
+% In particular when $\R$ in state $\st$ is activated by $\adv$ with a query ($\mathbf{a}$) to some oracle $A$ it runs $(r,st') \sample \Sim_A(st,\mathbf{a})$ and returns the response $\r$ to $\adv$ and then sets its internal state $st := st'$.
+% It is important for our purposes that in the description of $\R$ it forwards the request and returns the result of any oracle queries without inpsecting the query or response.
+
+% We now define an extension of the.
+
+In a security game a challenger $\C$ and adversary $\adv$ send game defined messages to each other sequentially.
+If at the end of the game the \emph{transcript} of the messages satisfy a game specific predicate then the adversary is said to have won the succeeded, otherwise they have failed.
+A simple and relevant example is the \emph{unforgeability} games where $\C$ sends $\adv$ a public key $X$ and then $\adv$ sends back a signature $\sigma$.
+
+
+
+The security game may allow $\adv$ to query $\C$ about something it could
+
+
+\begin{definition}[Security Reduction]
+  \label{security-reduction}
+
+
+  Let $\hardproblem$ and $\ghardproblem$ describe two security games.
+  Let $\C$ be the challenger for $\ghardproblem$, let $\adv$ be an adversary against $\hardproblem$ and let $\R$ be an ITM that interacts with $\C$ and $\R$ concurrently by playing the challenger in $\hardproblem$ and the adversary in $\ghardproblem$.
+  We say $\R$ is a reduction from $\ghardproblem$ to $\hardproblem$ if its probability of success and execution time in the $\ghardproblem$ security game is a function of the probability success and execution time of $\adv$ in the $\hardproblem$ security game.
+  The existence of $\R$ allows us to bound the success of any adversary against $\hardproblem$ by the difficulty of $\ghardproblem$.
+  Specifically, we say $\R$ is a reduction from $\ghardproblem$ to $\hardproblem$ if given any $\adv$ that $(\tau, \epsilon, Q_1,...,Q_n)$-solves $\hardproblem$ $\R$ $(\tau', \epsilon', Q_1',\dots,Q_m')$-solves $\ghardproblem$ where $\e \leq \bound_\e(\e', Q_1,\dots,Q_n) $ and $\tau \geq \bound_\tau(\tau, Q_1,\dots,Q_n)$ and $Q_1,\dots,Q_n$ (resp. $\{Q_1', \dots, Q_m'$) are the number of queries made by $\adv$ (resp. $\R$) to each of the $n$ (resp. $m$) oracles available while solving $\hardproblem$ (resp. $\ghardproblem$).
+
+  \textbf{reduction structure.} The $\R$ machine must be structured as follows.
+  $\R$ is activated with an instance of a problem $\ghardproblem$ by the \emph{challenger} ITM.
+  After it is activated it may query the oracles $\O_1',\dots,\O_m'$ at any time by activating the challenger.
+  Eventually $\R$ activates $\adv$ with an instance of $\hardproblem$ and may supplies its random tape.
+  From there $\R$ may be activated again by $\adv$ making an oracle query or by $\adv$ returning output.
+  If $\hardproblem$ is an interactive problem it must activate $\adv$ again after it first returns output in accordance with description of $\hardproblem$ (and the same is true between the challenger and $\R$ with respect to $\ghardproblem$).
+
+  \textbf{oracle queries.} When $\adv$ makes any query to an oracle $\O_i$ it has access to in $\hardproblem$ $\R$ is activated (as it is the notional challenger).
+  In particular, $\R$ is activated with $(\mathit{oracle}, i,\mathbf{q})$ where $\query$ is the query $\adv$ is making to $\O_i$.
+  $\R$ must then \emph{blindly} forward $q$ to a simulator subroutine along with its own \emph{advice} $\advice$.
+  When activated with $(\alpha, q)$ the simulator returns $(\radvice, \rquery)$ to $\R$ where $\radvice$ is the simulator's advice to $\R$ and $\rquery$ is the query response.
+  $\R$ then inspects $\radvice$ and decides whether to abort but cannot inspect $\rquery$.
+  If it does not abort, it outputs the query response $\rquery$ to $\adv$.
+  Note that restricting $\R$ so that it cannot read $(\query, \rquery)$ for each query is without loss of generality since, if need be, $\R$ can be defined with a simulator that returns $(\query,\rquery)$ in $\radvice$.
+
+  \textbf{oracle simulator requirements.} $\R$ may be defined with any set of simulators $\Sim_1,\dots,\Sim_n$ for each oracle in $\hardproblem$ as long as they preserve the view $\adv$ with respect to $\hardproblem$.
+  $\R$ cannot choose the random tape of its simulators, instead they are provided directly by the environment.
+  If $\ghardproblem$ allows oracle queries ($m > 0$) then the simualtors may (and very often will) query $\ghardproblem$ directly (they may do this without activating $\R$).
+  The execution time of the simulator contributes to the execution time of $\R$ (but the execution of oracles from $\ghardproblem$ do not).
+  Each simulator may abort the execution which in-turn aborts the execution of $\R$ as well.
+
+  \textbf{rewinding.} $\R$ may ``rewind'' $\adv$, which in our definition simply means activating a new instance of $\adv$ with the same random tape.
+  Despite $\R$ not being able to read query response from the oracle simulators, it may store them and repeat the response for each corresponding query.
+  Note it need not inspect the query to do this since after rewinding, the adversary will make the same queries in the same order.
+\end{definition}
+
+% % \begin{lemma}
+%  %   Let $\R_A$ be a reduction that $(\tau, \epsilon)$-solves $\ghardproblem$ with access to an adversary $\adv^A$ that $(\tau_A,\epsilon_A)$-solves $\hardproblem_A$ with a simulator $\Sim_A$ for $A$ where $B_\tau(\tau_A)$
+
+% %   If there exists a simulator for $B$ such that for all states $\st$ of $R_A$ and for all queries $a$ to $A$ and $b$ to $B$ the distributions of $\st_A$ and $\st_B$ are identical where $(\st_A,r_A) \sample \Sim_A(\st,a)$ and $(\st_B,r_B) \sample \Sim_B(\st,b)$,
+% %   then there exists a reduction $R_B$ which $(\tau_B,\epsilon_B)$-solves $\ghardporblem$ with access to an adversary $\adv^B$ that $(\tau_B',\epsilon_B')$-solves $\hardproblem^B$
+% \end{lemma}
+
+
+To profit from our isolation of the oracle simulators from the reduction itself we now define how to replace an oracle with another oracle,and by implication change the set of adversaries the reduction works against.
+Since we are only changing oracles, the transcript between the reduction and the adversary remains in the same form and so the reduction should be able to extract solutions to the exterior problem from it.
+To ensure this is true our switch of oracles must not affect the reduction.
+Therefore, the new oracle simulator, in addition to simulating the view of the adversary, must simulate the view of the reduction with respect to the simulator that is being replaced.
+
+% \begin{lemma}
+%   Let $\ghardproblem$ and $\hardproblem$ be two hard problems each with a (perhaps empty) set of oracles $\{\O_1^\ghardproblem,\dots,\O_m^\ghardproblem\}$ and $\{\O_1^\hardproblem,\dots,\O_n^\hardproblem\}$.
+%   Let $\hardproblem^*$ be a variation of $\hardproblem$ with a different set of oracles $\{\O_1^{\hardproblem^*},\dots,\O_n^{\hardproblem^*}\}$
+%   and $\ghardproblem^*$ be a variation of $\ghardproblem$ with a set of oracles $\{\O_1^{\ghardproblem^*},\dots,\O_{m'}^{\ghardproblem^*}\}$.
+
+%   Let $\R$ be a reduction from $\ghardproblem$ to $\hardproblem$ with bounding functions $(\bound_\e,\bound_\tau)$ and oracle simulators $\{\Sim_1, \dots, \Sim_n\}$.
+%   If there exist simulators $\{\S^*_1, \dots, \S^*_n\}$ that simulate the view of the adversary in $\hardproblem^*$ by making queries to $\{\O_1^{\ghardproblem^*},\dots,\O_{m'}^{\ghardproblem^*}\}$ such that for all possible queries $\{q_{1,1},\dots,q_{Q_n,n}\}$ by the adversary in $\hardproblem$ and for all possible queries $\{q^*_{1,1},\dots,q^*_{Q_n,n}\}$ in $\hardproblem^*$ and for all possible choices of advice $\alpha_1,$ the distributions of ${\Sim_i(\alpha_j,q_{i,j})\}$ and $\{\Sim_i(\alpha_j,q^*_{i,j})\}$ for $i \in 1, \dots n, j \in 1, \dots Q_i$ are identical.
+%   Then $\R$ is a reduction from $\hardproblem^*$ to $\ghardproblem^*$ with bounding function $(\bound_\e, \bound^*_\tau)$ where $\bound^*_\tau$
+
+
+% \end{lemma}
+
+
+\begin{lemma}[Simulator Substitution]
+  \label{oracle-sub}
+  Let $\hardproblem^A$ (resp. $\hardproblem^B$) be a variation of some hard problem $\hardproblem$ where the adversary has access to an additional oracle $A$ (resp. $B$) with a valid set of queries $\mathbb{Q}_A$ (resp. $\mathbb{Q}_B$).
+  Let $\R$ be a security reduction from  $\ghardproblem$ to $\hardproblem^A$ which uses $\Sim_A$ with minimum execution time $\tau^A_{\min}$, to simulate $A$.
+  Let $\Sim_B$ be a simulator with maximum execution time $\tau^B_{\max}$ for $B$ that requires access to additional oracles and $\ghardproblem^C$ be a variant of $\ghardproblem$ that provides those oracles.
+  If for all advice $\advice$ and all $q_B \in \mathbb{Q}_B)$ there exists $q_A \in \mathbb{Q}_A$ such that the distributions of $\radvice_A$ and $\radvice_B$ are identical where $(\radvice_A, \cdot) \sample \Sim_A(\advice, q_A)$ and $(\radvice_B, \cdot) \sample \Sim_B(\advice, q_B)$,
+  then $\R$ is also a reduction from $\ghardproblem^C$ to $\hardproblem^B$.
+  In particular the reduction has bounding functions $\bound_\e, \bound^B_\tau$ where $\bound^B_\tau(\tau) = \bound_\tau(\tau) - Q^*(\tau^B_{\max} - \tau^A_{\min})$ where $Q^*$ is the number of times $\R$ executes $\Sim_A$.
+\end{lemma}
+
+\begin{proof}
+
+  For the advantage of $\R$ against $\ghardproblem$ (or $\ghardproblem^C$) to be different when running against a adversary solving $\hardproblem^B$ than to an adversary solving $\hardproblem^A$, the view of $\R$ must be distributed differently when the two adversaries finally output their respective solutions.
+  If they were not distributed differently then $\R$ could be used to distinguish two identically distributed variables which is a contradiction.
+
+  The view of $\R$ consists of three parts (i) its transcript with the $\ghardproblem$ challenger, (ii) its transcript with the adversary solving $\hardproblem$ and (iii) its transcripts with its oracles.
+  Clearly, changing $\ghardproblem$ to $\ghardproblem^C$ does not change the distribution of (i) since $\R$ does not query the extra oracles in $\ghardproblem^C$.
+  For every adversary against $\hardproblem^B$ there must exist an adversary against $\hardproblem^A$ with that sends non-oracle messages to $\R$ from the same distribution (this adversary does not necessarily run in the same time but has the same advantage). This means that (ii) cannot be the source of disparity.
+  Finally, as our premise we have stated that $\Sim_A$ and $\Sim_B$ return identically distributed $\radvice$ given some $\advice$ so the transcripts in (iii) are also identically distributed.
+
+  The running time of $\R$ against $\adv^B$ will be the difference between the running time of $\Sim_B$ and $\Sim_A$ multiplied by the number of executions and similarly the number of oracle queries made to $\ghardproblem$.
+\end{proof}

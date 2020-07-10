@@ -124,13 +124,13 @@ After recalling the original BGLS definition of unforgeability, we use this intu
 \begin{definition}[BGLS VES Unforgeability \cite{Boneh:2003:AVE:1766171.1766207}]
 \label{original-unforgeability}
 
-We say a VES scheme $\hatSigma$ is $(\tau, \epsilon, Q_E, Q_D)$-BGLS unforgeable if $\prob{\textsf{VES-Forge} = 1} < \epsilon$ for all algorithms $\F$ running in time $\tau$ making $Q_E$ and $Q_D$ signature encryption and decryption oracle queries respectively.
-Note that unlike in the $\EUFCMAVES$ experiment the oracles in $\textsf{VES-Forge}$ only provide signature encryptions and decryption on a static key chosen by the experiment (this represents the trusted adjudicator's key).
+We say a VES scheme $\hatSigma$ is $(\tau, \epsilon, Q_E, Q_D)$-BGLS unforgeable if $\prob{\textsf{BGLS-Unforgeability} = 1} < \epsilon$ for all algorithms $\F$ running in time $\tau$ making $Q_E$ and $Q_D$ signature encryption and decryption oracle queries respectively.
+Note that unlike in the $\EUFCMAVES$ experiment the oracles in $\textsf{BGLS-Unforgeability}$ only provide signature encryptions and decryption under a static encryption key chosen by the experiment (this represents the trusted adjudicator's key).
 
  \begin{center}
  \fbox{
  \begin{pchstack}
-       \procedure{$\textsf{VES-Forge}^{\F}_{\hatSigma}$}{
+       \procedure{$\textsf{BGLS-Unforgeability}^{\F}_{\hatSigma}$}{
         Q \gets \emptyset \\
         \kSign \sample \KeyGen \\
         \kEnc \sample \EncGen \\
@@ -156,19 +156,19 @@ Note that unlike in the $\EUFCMAVES$ experiment the oracles in $\textsf{VES-Forg
 \end{definition}
 
 \begin{theorem}[\EUFCMAVES + Validity $\implies$ BGLS Unforgeability]
-If a VES scheme is $(\tau_f, \epsilon_f, Q_E)$-\EUFCMAVES secure and $(\tau_v, \epsilon_v)$-valid then it is $(\tau, \epsilon, Q_E, Q_D)$-BGLS unforgeable where $\epsilon \leq \epsilon_f + \epsilon_v$, $\tau = \tau_f - O(Q_E + Q_D)$ and $\tau_v \approx \tau$.
+  Let $\hatSigma$ be a VES scheme and let $\F$ be a forger that $(\tau, \epsilon, Q_E, Q_D)$-breaks the BGLS unforgeability of it.
+  Then, there exists a forger $\F_0$ that $(\tau_0, \epsilon_0, Q_E)$-breaks the $\EUFCMAVES$ security of $\hatSigma$ and an adversary $\adv_v$ that $(\tau_v, \epsilon_v)$-breaks the validity of $\hatSigma$, where $\epsilon \leq \epsilon_0 + \epsilon_v$ and $\tau_v \approx \tau_0 \approx \tau$.
 \end{theorem}
 
 \begin{proof}
+  We construct $\F_0$ as follows:
 
-  We can bound the advantage of a BGLS forger by constructing an algorithm $\R_{\EUFCMAVES}$ which forge a signature in the $\EUFCMAVES$ experiment and an algorithm $\R_{\text{valid}}$  that outputs a valid ciphertext that does not decrypt to a valid signature.
-  $\R_{\EUFCMAVES}$ is depicted below.
 \begin{center}
 \fbox{
 \begin{pchstack}
-\procedure{$\R^{E}_{\EUFCMAVES}(\pkSign)$}{%
+\procedure{$\F_0^{E}(\pkSign)$}{%
     (\skEnc, \pkEnc) \sample \EncGen \\
-    (m^*, \hatsigma^*) \sample \F^{\tilde{E},\tilde{D}}_{\textsf{VES-Forge}}(\pkSign, \pkEnc) \\
+    (m^*, \hatsigma^*) \sample \F^{\tilde{E},\tilde{D}}(\pkSign, \pkEnc) \\
     \sigma^* \gets \DecSig(\skEnc, \hatsigma^*) \\
     \pcreturn (m^*, \sigma^*) \\
 }
@@ -186,14 +186,18 @@ If a VES scheme is $(\tau_f, \epsilon_f, Q_E)$-\EUFCMAVES secure and $(\tau_v, \
 \end{center}
 
 
-Clearly $\R$ perfectly simulates the view of $\F$ in the real experiment.
-If $\F$ outputs a valid ciphertext that yields a valid signature upon decryption $\R_{\EUFCMAVES}$ successfully forges a signature in the $\EUFCMAVES$ experiment.
-In the other case where $\F$ outputs a valid ciphertext that does not yield a valid signature we have broken validity.
-Therefore we can bound $\epsilon$ (the success probability of $\F$) by $\epsilon_f + \epsilon_v$.
-$\R$ takes only a constant factor longer than $\F$ to run in addition to answering its oracle queries so $\tau' = \tau - O(Q_E + Q_D)$.
+Clearly $\F_0$ can perfectly simulate the view of $\F$ in the real $\textsf{BGLS-Unforgeability}$ experiment by generating the encryption key-pair itself and using its access to $E$ from the $\EUFCMAVES$ experiment.
+If $\F$ outputs a valid ciphertext that yields a valid signature upon decryption, $\F_0$ successfully forges a signature in the $\EUFCMAVES$ experiment.
+Otherwise if the ciphertext does not yield a valid signature, the tuple $(\pkSign,(\skEnc, \pkEnc),m, \hatsigma)$ can be used to break validity and so we can construct an aglorithm $\adv_v$ that simulates the view similarly to $\F_0$ but returns those tuples. Therefore,
 
+\[  \prob{\textit{$\F$-breaks}} = \prob{\textit{$\F_0$-breaks}} + \prob{\textit{$\adv_v$-breaks}} \]
 
+and $\epsilon \leq \epsilon_0 + \epsilon_v$.
+Regardless of which VES property $\F$ breaks, for the other two algorithms to output a solution to their problem they will take whatever time $\F$ takes plus extra time to simulate the oracle queries so we say $\tau_v \approx \tau_0 \approx \tau$.
 \end{proof}
+
+
+\subsection{Sign Then Encrypt VES}
 
 We now make the case for using \EUFCMAVES as the standard VES security definition even in the trusted party setting since it implies BGLS unforgeability and it is much easier to prove for the schemes that have been developed so far.
 We can prove all existing schemes we are aware of \cite{Boneh:2003:AVE:1766171.1766207, Ruckert:2009:SVE:1615384.1615387, waters-ves, SHAO20081961, VES-structure-preserving} \EUFCMAVES secure just by the \emph{Sign then Encrypt} (StE) structure they all share.
@@ -206,14 +210,18 @@ A \emph{Sign then Encrypt} (StE) VES scheme is defined with an ordinary \emph{un
 It is easy to see that any valid StE scheme must be $\EUFCMAVES$ secure.
 The encryption oracle $E$ the forger has access to in the $\EUFCMAVES$ experiment can be simulated just by encrypting the result of a query to the signature oracle $S$ that the \EUFCMA experiment provides.
 
-\begin{theorem}[StE $\implies$ \EUFCMAVES]
-Let $\hatSigma$ be a StE VES scheme,  $\Sigma$ be its underlying signature scheme and $\Pi = (\ENCALG)$ be its associated public key encryption scheme.
-If there is reduction $\R$ from some hard problem $\hardproblem$ to the $\EUFCMA$ security of $\Sigma$, then there is a reduction $\hatR$ from $\hardproblem$ to the \EUFCMAVES security of $\hatSigma$.
+\begin{theorem}[StE + \EUFCMA $\implies$ \EUFCMAVES]
+  Let $\hatSigma$ be a StE VES scheme,  $\Sigma$ be its underlying signature scheme and $\Pi = (\ENCALG)$ be its associated public key encryption scheme and let $\R$ be a reduction to the $\EUFCMA$ security of $\Sigma$ with signature simulator $\Sim_S$.
+  If $\R$ shows that $\Sigma$ is at least $(\tau, \e, Q_S)$-$\EUFCMA$ secure then $\hatSigma$ is at least $(\tau', \e, Q_E)$-$\EUFCMAVES$ secure where
+
+  \[ Q_E = Q_S, \tau = \tau' + Q^*_S\tau_{\Enc} \]
+
+  \hfill \break and $Q^*_S$ is number of times $\R$ executes $\Sim_S$ and $\tau_{\Enc}$ is the time $\Enc$ takes to run.
 \end{theorem}
 
 \begin{proof}
-  To solve $\hardproblem$, $\hatR$ runs $R$ internally, outputs whatever it outputs and lets it answer all oracle queries from the VES forger except for those directed to $E$.
-  When $\hatR$ receives an $E$ oracle query $(m, \pkEnc)$ it makes a query $(m)$ to $S$ and receives $\sigma$.
-  It then sets $\hatsigma \gets \Enc(\pkEnc, m)$ and returns $\hatsigma$ to the forger.
-  Clearly, $\hatR$ is also a valid $\EUFCMAVES$ reduction from $\hardproblem$ to $\R$ is a valid $\EUFCMA$ reduction from $\hardproblem$.
+  We can construct a substitutable simulator for $\Sim_E$ with $\Sim_S$ trivially.
+  When $E$ is asked to respond to a query by $\R$ with $(\advice, (\pkEnc, m))$, $\Sim_E$ forwards the query to $\Sim_S$ like so $(\radvice, \sigma) \sample \Sim_S(\advice, m)$
+  and then encrypts the result $\hatsigma \sample \Enc(\pkEnc, m)$ and returns $(\radvice, \hatsigma)$ to $\R$.
+  Clearly $\Sim_E$ and $\Sim_S$ are simulation substitutable as per Lemma~\ref{oracle-sub} since each $q_E := (\pkEnc, m)$ and $\advice$ has a corresponding query $q_S := m$ whose $\radvice$ must be distributed identically because it is produced by $\Sim_S$ and forwarded by $\Sim_E$ unmodified.
 \end{proof}

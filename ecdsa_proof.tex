@@ -10,99 +10,140 @@
 \newcommand{\Sdleq}{\mathcal{S}_{\DLEQ}}
 \newcommand{\B}{\mathcal{B}}
 
-To prove our theorem, we show that when the signature oracle $S$ from the reduction by Fersh et al\. is replaced by a signature encryption oracle $E$ it becomes a $\EUFCMAVES$ reduction from the $u\QDLSDH$ problem where $u$ is the number of queries to $E$ plus 1.
-
-First we give more thorough description of the original reduction.
-Fersh et al\. decomposed and idealize the conversion function $f:\G \rightarrow \ZZ_q$ that maps a group element to its x-coordinate mod $q$ as a random oracle.
-The forgery queries the oracle and eventually outputs a forgery with some probability.
-To solve a an instance of $\DLOG$ the reduction programs the oracle and rewinds the successful forger to attempt to get it to produce two signatures with different values for $\Rx = f(R)$ but the same value for $R$ in the typical ``forking lemma''.
+First, we give more thorough description of the original $\EUFCMA$ reduction by Fersh et al.\cite{ecdsa-eufcma}.
+Fersh et al.\ decompose and idealize the conversion function $f:\G \rightarrow \ZZ_q$ that maps a group element to its x-coordinate mod $q$ as a random oracle.
+The forger queries the bijective random oracle $\Pi$ and the signature oracle $S$ and eventually outputs an ECDSA forgery with some probability.
+The reduction programs the oracle and rewinds the successful forger in an attempt to get it to produce two signatures with different values for $\Rx = f(R)$ but the same value for $R$ in the typical ``forking lemma'' style\cite{pointcheval2000security}.
 In more detail, $f$ is decomposed as $f = \psi \circ \Pi \circ \varphi$ where:
 
 \begin{enumerate}
     \item $\varphi: \G \rightarrow \phirange$ is an invertible 2-to-1 function mapping curve points to the domain of $\Pi$ reflecting the fact that every x-coordinate belongs to two possible group elements.
     \item $\Pi: \phirange \rightarrow \psidomain$ is the bijective random oracle that the reduction is able to program.
-    \item $\psi: \psidomain \rightarrow \ZZ_q$ is an invertible function that maps the range of $\Pi$ to $\ZZ_q$.
-    \end{enumerate}
+    \item $\psi: \psidomain \rightarrow \ZZ_q$ is a ``semi-injective'' invertible function that maps the range of $\Pi$ to $\ZZ_q$.
+\end{enumerate}
 
-\begin{theorem}
-  Let $\F$ $(\tau,Q_s,Q_\Pi,\epsilon)$-break the \EUFCMA security of ECDSA.
-  Then if $\Pi$ is modelled as a random oracle there exists an adversary
-  that $(\tau_{\psidr},\epsilon_{\psidr})$-breaks the $\psi$-relative division resistance of $H$, an adversary that $(\tau_{\textsf{cr}}, \epsilon_{\textsf{cr}})$-breaks collision resistance of $H$ and inverters that $(\tau', \epsilon')$-break and $(\tau'', \epsilon'')$-break, respectively, $\DLOG$ in $\G$ such that
-
-  \[ \epsilon \leq \sqrt{2Q_{\Pi}^2\epsilon_{\psidr} + 2Q_{\Pi}\epsilon' } + \epsilon'' + Q_{\Pi}^2/2^L + \epsilon_{\textsf{cr}} + \frac{3QQ_s}{(q-1)/2-Q}  \]
-
-  \hfill \break and $\tau_{\psidr} = \tau' = 2\tau + O(Q_s) + O(Q_{\Pi})$, $\tau'' = \tau + O(Q_{s})+ O(Q_{\Pi})$ and $\tau_{\textsf{cr}} = \tau + O(Q_s)$.
+Fersh et al.\ split up their security proof by first doing a reduction from the ECDSA's $\EUFKO$ security to $\EUFCMA$ and then from $\DLOG$ to $\EUFKO$.
+To make our security claim we imagine that these two reductions have been combined into one so that $\DLOG$ is reduced directly to $\EUFCMA$ and then tranform that reduction by replacing $S$ with $E$.
 
 
-
-\end{theorem}
-
-Thus our theorem begins as follows
-
-\begin{theorem}
-  Let $\F$ $(\tau,Q_E,Q_\Pi,\epsilon)$-break the $\EUFCMAVES$ security of ECDSA.
-  Then if $\Pi$ is modelled as a random oracle there exists an adversary
-  that $(\tau_{\psidr},\epsilon_{\psidr})$-breaks the $\psi$-relative division resistance of $H$, an adversary that $(\tau_{\textsf{cr}}, \epsilon_{\textsf{cr}})$-breaks collision resistance of $H$ and inverters that $(\tau', \epsilon')$-break and $(\tau'', \epsilon'')$-break, respectively, $u\QDLSDH$ in $\G$ such that
-
-  \[ \epsilon \leq \sqrt{2Q_{\Pi}^2\epsilon_{\psidr} + 2Q_{\Pi}\epsilon' } + \epsilon'' + Q_{\Pi}^2/2^L + \epsilon_{\textsf{cr}} + \frac{3QQ_E}{(q-1)/2-Q}  \]
-
-  \hfill \break and $\tau_{\psidr} = \tau' = 2\tau + O(Q_E) + O(Q_{\Pi})$, $\tau'' = \tau + O(Q_{E})+ O(Q_{\Pi})$, $\tau_{\textsf{cr}} = \tau + O(Q_E)$ and $u = Q_E + 1$.
+\begin{proof}
 
 
-\end{theorem}
-
-To begin our reduction to $u\QDLSDH$ we first query $X \gets \OSDH(g)$, which gives us the notional public key $X$ that the signature forger would see in a real experiment.
-The reduction then carries on exactly as in the original by activating the forger with $X$ and responding to its oracle queries except that the signature oracle $S$ is replaced with an signature encryption oracle $E$.
-
-For each query to $E(Y,m)$ we must return $(R,\hat{R}, \hat{s}, \pi)$ such that the ciphertext is valid and $\hat{R}^y = R$ where $Y = g^y$.
-The latter requirement is not straightforward since the simulator does not know the discrete logarithms of $\hat{R}$ and $R$ and does not know $y$.
-The trick here is to query $\OSDH$ with $Y$ to figure out $X^y$ reverse the operations from Lemma~\ref{key-leak} to compute $R$ and $\hat{R}$ correctly.
-Once we have a well formed $(\hat{R}, R)$ we run the simulator for $\Pdleq$ which we denote $\Sdleq$ to create $\pi$ without the witness $y$ (which we have access to due to its zero knowledge property).
-We depict the simulation of the signature encryption oracle $E$ along side the signature oracle $S$ of the original reduction below.
-
-\begin{center}
-    \fbox{
-        \begin{pchstack}
-        \procedure{Simulate $S(m)$}{
-            \beta \sample \psidomain \\
-            \pcif (\cdot, \beta) \in \Pi: \textbf{abort} \\
-            \Rx{} \gets \psi(\beta) \\
-            s \sample \ZZ_q \\
-            u_1 \gets H(m)s^{-1} \\
-            u_2 \gets \Rx{}s^{-1} \\
-            R \gets g^u_1X^{u_2} \\
-            \alpha \gets \varphi(R) \\
-            \pcif (\alpha,\cdot) \in \Pi: \textbf{abort} \\
-            \Pi \gets \Pi \cup \{ (\alpha, \beta) \} \\
-            Q \gets Q \cup \{m\} \\
-            \pcreturn (s, \Rx)
-        }
-        \pchspace
-        \procedure{Simulate $E(Y, m)$}{
-            \beta \sample \psidomain \\
-            \pcif (\cdot, \beta) \in \Pi: \textbf{abort} \\
-            \Rx{} \gets \psi(\beta) \\
-            \hat{s} \sample \ZZ_q \\
-            Z \gets \OSDH(Y) \\
-            u_1 \gets H(m)\hat{s}^{-1} \\
-            u_2 \gets \Rx{}\hat{s}^{-1} \\
-            R \gets Z^{u_1}Y^{u_2} \\
-            \hat{R} \gets X^{u_1}g^{u_2} \\
-            \pi \gets \Sdleq((g, \hat{R}),(Y,R)) \\
-            \alpha \gets \varphi(R) \\
-            \pcif (\alpha,\cdot) \in \Pi: \textbf{abort} \\
-            \Pi \gets \Pi \cup \{ (\alpha, \beta) \} \\
-            Q \gets Q \cup \{m\} \\
-            \pcreturn (R, \hat{R}, \hat{s}, \pi) \\
-        }
-        \end{pchstack}
-    }
-  \end{center}
-
-Observe that the probability of the simulator for $E$ aborting per query is the same as for the simulator for $S$.
-
-Note that we leave out and several details to focus on the simulation of $E$ which is the only relevant part for proving our theorem.
+  In the bijective random oracle model, the ECDSA signature oracle $S$ (for $\EUFCMA$) and encrypted signature oracle $E$ (for $\EUFCMAVES$) can be simulated by the algorithms $(\Sim_S, \Sim_E)$ below.
+  $\Sim_S$ is adapted from the original simulator from Fersh et al.\cite{ecdsa-eufcma} (Figure 5).
+  Unlike the original, $\Sim_S$ does not program the oracle responses directly but returns them as advice $\radvice := ((\alpha, \beta),m)$ along with the message.
+  It returns the message because the reduction needs extract a hash collision from an adversary that forges a signature by querying $m$ to $\Sim_S$ and finding $H(m') = H(m)$.
 
 
+  To simulate $E$, for a query $(Y,m)$ $\Sim_E$ must return a valid tuple $(R,\hat{R}, \hat{s}, \pi)$ with respect to a programmed entry $(\alpha, \beta) \in \Pi$.
+  We sample $\beta$ and $\hat{s}$ randomly as in the $\Sim_S$.
+  The difficult part is to return $(\hat{R}, R)$ such that $\hat{R}^y = R$ where $Y = g^y$ since the simulator does not know $y$.
+  The trick is achieve this shown in lines 7-11 of Figure~\ref{sim-ecdsa}.
+  First we query $\OSDH$ with $Y$ to learn $Z = Y^x = X^y$ and then use the fact that $(Y,Z) = (g,X)^y$ to compute $R = \hat{R}^y$.
+  Once we have a well formed $(\hat{R}, R)$ we run the zero-knowledge simulator for $\Pdleq$ which we denote $\Sdleq$ to create $\pi$.
+  To complete the simulation we program our return advice $\radvice$ with $\beta$ and $\alpha \gets \varphi(R)$.
+  $(R,\hat{R}, \hat{s}, \pi)$ is a valid and uniformly distributed ECDSA encrypted signature with $\Pi$ programmed with $(\alpha, \beta)$, and therefore $\Sim_E$ simulates $E$.
 
-for the sake of clarity and encourage the reader to review the original proof in \cite{ecdsa-eufcma} to get a full understanding of the reduction.
+\begin{figure}[h]
+    \centering
+    \begin{mdframed}
+    \begin{pchstack}[center]
+      \procedure{$\Sim_S(\pkSign := \advice, (m) := \query_S)$}{
+        X := \pkSign \\
+        \beta \sample \psidomain \\
+        \Rx{} \gets \psi{}(\beta) \\
+        \pcif \Rx = 0 \pcthen \pcreturn \bot \\
+        s \sample \ZZ_q \\
+        \pcif s = 0 \pcthen \pcreturn \bot \\
+        u_1 \gets H(m)s^{-1} \\
+        u_2 \gets \Rx{}s^{-1} \\
+        R \gets g^{u_1}X^{u_2} \\
+        \pcif R = 1 \pcthen \pcreturn \bot \\
+        \alpha \gets \varphi(R) \\
+        \rquery_S := (\Rx, s) \\
+        \radvice_S := ((\alpha,\beta), m) \\
+        \pcreturn (\radvice_S, \rquery)
+      }
+      \pchspace
+      \procedure[linenumbering]{$\Sim_E(\pkSign := \advice, (\pkEnc,m) := \query_E)$}{
+        X := \pkSign; Y := \pkEnc \\
+        \beta \sample \psidomain \\
+        \Rx{} \gets \psi(\beta) \\
+        \pcif \Rx = 0 \pcthen \pcreturn \bot \\
+        \hat{s} \sample \ZZ_q \\
+        \pcif \hat{s} = 0 \pcthen \pcreturn \bot \\
+        Z \gets \OSDH(Y) \\
+        u_1 \gets H(m)\hat{s}^{-1} \\
+        u_2 \gets \Rx{}\hat{s}^{-1} \\
+        \hat{R} \gets X^{u_1}g^{u_2} \\
+        R \gets Z^{u_1}Y^{u_2} \\
+        \pcif R = 1 \pcthen \pcreturn \bot \\
+        \pi \gets \Sdleq((g, \hat{R}),(Y,R)) \\
+        \alpha \gets \varphi(R) \\
+        \rquery_E := (R, \hat{R}, \hat{s}, \pi) \\
+        \radvice_E := ((\alpha,\beta), m) \\
+        \pcreturn (\radvice_E, \rquery)
+      }
+    \end{pchstack}
+    \end{mdframed}
+    \caption{The original simulator for the signing oracle $S$ with our simulator for $E$.}
+    \label{sim-ecdsa}
+  \end{figure}
+
+
+  Now we argue that these two simulators are substitutable as per Lemma~\ref{oracle-sub} which requires that for all $\advice$ and all $\query_E$ there must exists a $\query_S$ such that $\radvice_E$ and $\radvice_S$ are distributed identically.
+  For every $\query_E := (Y, m)$ there is obviously the query $\query_S := (m)$ which means the $m$ in  $\radvice_S$ and $\radvice_E$ will be the same.
+  So we require that for all $X$, and all values of $(Y,m)$ the distributions of $(\alpha_E,\beta_E)$ and $(\alpha_S,\beta_S)$ are identical where
+
+  \begin{align*}
+    & (((\alpha_E,\beta_E), m), \cdot) \sample \Sim_E(X,(Y,m)) \\
+    & (((\alpha_S,\beta_S), m), \cdot) \sample \Sim_S(X,(m))
+  \end{align*}
+
+  $\beta_E$ and $\beta_S$ are sampled uniformly in both cases.
+  Although $R$ is computed differently it is distributed identically and so $\alpha_S \gets \varphi(R)$ and $\alpha_E \gets \varphi(R)$ are also distributed the same.
+  Thus the oracle simulators $S_S$ and $S_E$ are substitutable.
+
+  As proved in Lemma~\ref{oracle-sub}, since we provide $\Sim_E$ with an additional oracle $\OSDH$ the reduction bounds adversaries against $\EUFCMAVES$ against the hardness of $u\QDLSDH$ rather than ordinary $\DLOG$ (but with the same advantage bound $\bound_\e$).
+  $\Sim_E$ queries $\OSDH$ once per query so $u = Q_E$.
+  Since $\Sim_E$ does a extra double scalar multiplication over $\Sim_S$ we write $\tau'' = \bound_\tau(\tau_{\sdh},Q_E, Q_{\Pi}) -  2et_{\G^*}$.
+
+\end{proof}
+
+\section{Hardness of $u\QDLSDH$ in secp256k1}
+\label{secp-qdlsdh}
+
+We base our estimates on the work of Brown et al.\cite{SDHP} who show approximately the best known algorithm for solving $u\QDLSDH$\footnote{In our description of $u\QDLSDH$ the adversary is given a challenge group element up front (to make it easy to apply the simulator substitution lemma) and in Brown et al.\ work they only provide the oracle but this difference is immaterial.} which works in $O(\sqrt{q/u})$ time where $q$ is the order of the group.
+The intuition for the algorithms is this: if we suppose the order of $Z^*_q$ is divisible by $u$ and so $uv = q-1$ for some $v$, then there are subgroups of $Z^*_q$ of order $u$ and $v$ since they both divide the order.
+Simplifying a bit, the attack splits the problem of finding the discrete logarithm $x$ into finding the discrete logarithm of two smaller components of $x$ in the subgroups of order $u$ and $v$.
+To this end the attacker queries the oracle $u$ times to compute $g^{x^u}$ which allows it to work in the subgroup of order $v$ where it solves the smaller $\DLOG$ problem using a modified baby-step-giant-step algorithm.
+With that result, they are able to do the same for the subgroup of order $u$ and combine the two results to finally output the discrete logarithm.
+
+In addition to $u$ oracle queries the algorithm requires $n = 2(\sqrt{u} + \sqrt{v})$ scalar multiplications in $\G$ to finally output the discrete logarithm with certainty.
+Treating the oracle queries and scalar multiplications as equal, the algorithm has an optima running time of approximately $3\sqrt[3]{q}$ whenever $u = \sqrt[3]{q}$.
+We provide concrete estimates for the amount of computation needed to run this algorithm on secp256k1 in Figure~\ref{fig:sdh_alg_time}.
+As expected, the table shows the optimal value for $u$ (treating scalar multiplications between the attacker and the oracle as equal) is $~2^{84} \approx \sqrt[3]{q}$ which gives $n \approx ~2^{86}$.
+Smaller and more plausible values for $u$, e.g. $u \approx 2^{24} \approx$ 16 million give $n \approx 2^{116}$ which means receiving 16 million encrypted signatures of your choosing will only improve your ability to solve the discrete logarithms over the generic algorithms which take $O(\sqrt{q}) \approx 2^{128}$ group operations.
+
+\begin{figure}[h]
+  \centering
+  \[ q = 2^6 \times 3 \times 149 \times 631 \times 107361 793816 595537 \times 174 723607 534414 371449 \times 341 948486 974166 000522 343609 283189  \]
+ \begin{tabular}{||c c c c||}
+ \hline
+ $\geq \log_2u $ & $\floor{\log_2u}$ & $\floor{\log_2n}$ & Factorization of $u$ \\ [0.5ex]
+ \hline\hline
+  * & 84 & 86 & $2 \times 149 \times 631 \times 174723607534414371449$ \\
+  \hline
+  80 & 80 & 88 & $2^2 \times 3 \times 631 \times 174723607534414371449$ \\
+  \hline
+  70 & 70 & 93 & $2^3 \times 174723607534414371449$ \\
+  \hline
+  60 & 60 & 98 & $2^2 \times 3 \times 107361793816595537$ \\
+  \hline
+  50 & 24 & 116 & $2^6 \times 3 \times 149 \times 631$ \\ [1ex]
+  \hline
+ \hline
+\end{tabular}
+\caption{The optimal number of scalar multiplications $n$ required in secp256k1 for each upper bound on the bit length of $u$ static Diffie-Hellman oracle queries to solve the $u\QDLSDH$ problem}
+\label{fig:sdh_alg_time}
+\end{figure}

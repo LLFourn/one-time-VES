@@ -40,6 +40,7 @@
 \newtheorem{conjecture}{Conjecture}[section]
 \newtheorem{lemma}{Lemma}[section]
 \newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[section]
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{remark}{Remark}
@@ -92,10 +93,23 @@
 \newcommand{\RDL}{\mathcal{R}_{\DLOG}}
 \newcommand{\hatR}{\hat{\mathcal{R}}}
 \newcommand{\hardproblem}{\mathcal{H}}
+\newcommand{\ghardproblem}{\mathcal{G}}
 \newcommand{\G}{\mathbb{G}}
 \newcommand{\DLOG}{\textsf{DL}\xspace}
 \newcommand{\CDH}{\textsf{CDH}\xspace}
 \newcommand{\Setup}{\textsf{Setup}}
+\newcommand{\Sim}{\mathcal{S}}
+\renewcommand{\st}{st}
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\e}{\varepsilon}
+\newcommand{\bound}{\mathcal{B}}
+\newcommand{\C}{\mathcal{C}}
+\newcommand{\advice}{a}
+\newcommand{\radvice}{a'}
+\newcommand{\query}{q}
+\newcommand{\rquery}{q'}
+\newcommand{\sdh}{\textsf{sdh}}
+
 \begin{document}
 
 \title{One-Time Verifiably Encrypted Signatures \\ A.K.A. Adaptor Signatures}
@@ -103,6 +117,7 @@
 \date{October 2019}
 
 \maketitle
+
 
 \begin{abstract}
   On Bitcoin-like ledgers, smart contract functionality can be realised without using the ledger's native smart contract language through the ``adaptor signature'' technique\cite{poelstra-adaptor}. An adaptor signature is a kind of partial signature that, if completed, will reveal valuable information to the signer. In this work, we conduct the first formal analysis of the adaptor signature as an isolated primitive. We find that it offers similar functionality to the already well established concept of \emph{verifiably encrypted signatures} (VES) with one notable difference: the decryption key can be recovered from the ciphertext and the decrypted signature. To capture this property, we formally introduce the notion of \emph{one-time verifiably encrypted signatures}. To properly define their security in the Bitcoin layer-2 setting we revisit the original VES definitions and modify them to remove the ingrained assumption of a trusted third party.
@@ -116,6 +131,7 @@
 % VERIFIABLY ENCRYPTED SIGNATURES
 
 \input{intro}
+\input{prelim}
 \input{ves}
 \input{one-time-ves}
 \input{schnorr}
@@ -189,53 +205,11 @@ Having said this, semi-scriptless protocols are a practical alternative to two-p
 
 \FloatBarrier
 \bibliography{bib.bib}{}
-\bibliographystyle{unset}
+\bibliographystyle{unsrt}
 
 \appendix
 
-\include{ecdsa_proof}
-
-
-
-% \section{Semi-Scriptless Time-Lock Protocol}
-
-% \begin{figure}[h]
-%     \centering
-%     \begin{mdframed}
-%     \begin{center}
-%         \pseudocode{%
-%         \\
-%         \textbf{Alice}(Y, \addrRefund, \TxInput) \< \< \textbf{Bob}(Y,\addrRedeem) \\[0.1 \baselineskip][\hline]
-%         \< \< \\[0.5\baselineskip]
-%         (sk_A,pk_A) \sample \KeyGen \< \< \\
-%         \< \sendmessageright*{pk_A, \TxInput, \addrRefund} \< \\
-%         \< \<  (sk_B,pk_B) \sample \KeyGen \\
-%         \< \< script := \texttt{OP\_CMS-2of2}(pk_A,pk_B) \\
-%         \< \< \TxFund \gets \TxGen(\TxInput, script) \\
-%         \< \< \TxRefund \gets \TxGen(\TxFund, \addrRefund) \\
-%         \< \< \refundSig^B \sample \Sign(sk_B, \TxRefund) \\
-%         \< \sendmessageleft*{pk_B, \refundSig, \addrRedeem} \< \\
-%         script := \texttt{OP\_CMS-2of2}(pk_A,pk_B) \\
-%         \TxFund \gets \TxGen(\TxInput, script) \< \< \\
-%         \TxRefund \gets \TxGen(\TxFund, \addrRefund) \< \< \\
-%         \Verify(pk_B, \TxRefund, \refundSig^{B}) \stackrel{?}{=} 1 \\
-%         \refundSig^{A} \sample \Sign(sk_A, \TxRefund) \\
-%         \refundSig := (\refundSig^{A},\refundSig^{B}) \\
-%         \TxRedeem \gets \TxGen(\TxFund, \addrRedeem) \< \< \\
-%         \redeemEncSig^A \sample \EncSign(sk_A, Y, \TxRedeem) \\
-%         \rec \gets \RecKey(Y, \redeemEncSig^A) \\
-%         \< \sendmessageright*{\redeemEncSig^A} \< \\
-%         \< \< \TxRedeem \gets \TxGen(\TxFund, \addrRedeem) \\
-%         \< \< \EncVer(pk_A, Y, \TxRedeem, \redeemEncSig^A) \stackrel{?}{=} 1 \\
-%         \< \< \redeemSig^B \sample \Sign(sk_B,\TxRedeem) \\
-%         \< \< \redeemEncSig := (\redeemEncSig^A, \redeemSig^B) \\
-%         \pcreturn \TxFund, (\TxRefund, \refundSig), (\TxRedeem, \rec) \< \< \pcreturn \TxFund, (\TxRedeem, \redeemEncSig) \\
-%     }
-%     \end{center}
-%     \end{mdframed}
-%     \caption{Caption}
-%     \label{fig:my_label}
-% \end{figure}
+\input{ecdsa_proof}
 
 \end{document}
 
