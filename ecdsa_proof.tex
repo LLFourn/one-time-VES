@@ -10,8 +10,8 @@
 \newcommand{\Sdleq}{\mathcal{S}_{\DLEQ}}
 \newcommand{\B}{\mathcal{B}}
 
-First, we give more thorough description of the original $\EUFCMA$ reduction by Fersh et al.\cite{ecdsa-eufcma}.
-Fersh et al.\ decompose and idealize the conversion function $f:\G \rightarrow \ZZ_q$ that maps a group element to its x-coordinate mod $q$ as a random oracle.
+First, we give more thorough description of the original $\EUFCMA$ reduction that we transform into our $\EUFCMAVES$ reduction.
+Fersh et al.\cite{ecdsa-eufcma} decompose and idealize the conversion function $f:\G \rightarrow \ZZ_q$ that maps a group element to its x-coordinate mod $q$ as a random oracle.
 The forger queries the bijective random oracle $\Pi$ and the signature oracle $S$ and eventually outputs an ECDSA forgery with some probability.
 The reduction programs the oracle and rewinds the successful forger in an attempt to get it to produce two signatures with different values for $\Rx = f(R)$ but the same value for $R$ in the typical ``forking lemma'' style\cite{pointcheval2000security}.
 In more detail, $f$ is decomposed as $f = \psi \circ \Pi \circ \varphi$ where:

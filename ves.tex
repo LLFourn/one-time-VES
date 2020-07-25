@@ -157,16 +157,16 @@ Note that unlike in the $\EUFCMAVES$ experiment the oracles in $\textsf{BGLS-Unf
 
 \begin{theorem}[\EUFCMAVES + Validity $\implies$ BGLS Unforgeability]
   Let $\hatSigma$ be a VES scheme and let $\F$ be a forger that $(\tau, \epsilon, Q_E, Q_D)$-breaks the BGLS unforgeability of it.
-  Then, there exists a forger $\F_0$ that $(\tau_0, \epsilon_0, Q_E)$-breaks the $\EUFCMAVES$ security of $\hatSigma$ and an adversary $\adv_v$ that $(\tau_v, \epsilon_v)$-breaks the validity of $\hatSigma$, where $\epsilon \leq \epsilon_0 + \epsilon_v$ and $\tau_v \approx \tau_0 \approx \tau$.
+  Then, there exists a forger $\R$ that $(\tau_0, \epsilon_0, Q_E)$-breaks the $\EUFCMAVES$ security of $\hatSigma$ and an adversary $\adv_v$ that $(\tau_v, \epsilon_v)$-breaks the validity of $\hatSigma$, where $\epsilon \leq \epsilon_0 + \epsilon_v$ and $\tau_v \approx \tau_0 \approx \tau$.
 \end{theorem}
 
 \begin{proof}
-  We construct $\F_0$ as follows:
+  We construct $\R$ as follows:
 
 \begin{center}
 \fbox{
 \begin{pchstack}
-\procedure{$\F_0^{E}(\pkSign)$}{%
+\procedure{$\R^{E}(\pkSign)$}{%
     (\skEnc, \pkEnc) \sample \EncGen \\
     (m^*, \hatsigma^*) \sample \F^{\tilde{E},\tilde{D}}(\pkSign, \pkEnc) \\
     \sigma^* \gets \DecSig(\skEnc, \hatsigma^*) \\
@@ -186,14 +186,16 @@ Note that unlike in the $\EUFCMAVES$ experiment the oracles in $\textsf{BGLS-Unf
 \end{center}
 
 
-Clearly $\F_0$ can perfectly simulate the view of $\F$ in the real $\textsf{BGLS-Unforgeability}$ experiment by generating the encryption key-pair itself and using its access to $E$ from the $\EUFCMAVES$ experiment.
-If $\F$ outputs a valid ciphertext that yields a valid signature upon decryption, $\F_0$ successfully forges a signature in the $\EUFCMAVES$ experiment.
-Otherwise if the ciphertext does not yield a valid signature, the tuple $(\pkSign,(\skEnc, \pkEnc),m, \hatsigma)$ can be used to break validity and so we can construct an aglorithm $\adv_v$ that simulates the view similarly to $\F_0$ but returns those tuples. Therefore,
+$\R$ perfectly simulates the view of $\F$ in the real $\textsf{BGLS-Unforgeability}$ experiment.
+Queries to $\tilde{E}$ are forwarded to the $\EUFCMAVES$ $E$ oracle while queries to $\tilde{D}$ are decrypted using the $\skEnc$ that $\R$ initially generated.
 
-\[  \prob{\textit{$\F$-breaks}} = \prob{\textit{$\F_0$-breaks}} + \prob{\textit{$\adv_v$-breaks}} \]
+If $\F$ outputs a valid ciphertext that yields a valid signature upon decryption, $\R$ successfully forges a signature in the $\EUFCMAVES$ experiment.
+Otherwise if the ciphertext does not yield a valid signature, the tuple $(\pkSign,(\skEnc, \pkEnc),m, \hatsigma)$ can be used to break validity and so we can construct an aglorithm $\R_v$ that simulates the view similarly to $\R$ but returns those tuples. Therefore,
 
-and $\epsilon \leq \epsilon_0 + \epsilon_v$.
-Regardless of which VES property $\F$ breaks, for the other two algorithms to output a solution to their problem they will take whatever time $\F$ takes plus extra time to simulate the oracle queries so we say $\tau_v \approx \tau_0 \approx \tau$.
+\[  \prob{\textit{$\F$-breaks}} = \prob{\textit{$\R$-breaks}} + \prob{\textit{$\R_v$-breaks}} \]
+
+and so $\epsilon \leq \epsilon_0 + \epsilon_v$.
+The overhead of $\R$ and $\R_v$ is only the time they take to simulate the oracle queries so we say $\tau_v \approx \tau_0 \approx \tau$.
 \end{proof}
 
 

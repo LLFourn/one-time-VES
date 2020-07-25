@@ -96,17 +96,18 @@ The simulator for $S$ used in the proof below is the black-box version of the si
   Let $\R$ be a reduction to the $\EUFCMA$ security of the Schnorr signature scheme in the random oracle model which uses the signature simulator $\Sim_S$ as below.
   If $\R$ shows that the Schnorr signature scheme is at least $(\tau,\e,Q_S,Q_H)$-$\EUFCMA$ secure then the Schnorr one-time VES is at least $(\tau',\e,Q_E,Q_H)$-$\EUFCMAVES$ secure where
 
-  \[ Q_E = Q_S, \tau' = \tau -  Q_S^*\tau_\G \]
+  \[ Q_E = Q_S, \tau = \tau' +  et_\G \]
 
-  \hfill \break and $\tau_{\G}$ is the time for a group operation and $Q_S^*$ is the number of times $\R$ executes $\Sim_S$.
+  \hfill \break and $t_{\G}$ is the time for a group operation and $e$ is the number of times $\R$ executes $\Sim_S$.
 \end{theorem}
 
 
 \begin{proof}
 
-  In the random oracle model, the Schnorr signature oracle $S$ (for $\EUFCMA$) and encrypted signature oracle $E$ (for $\EUFCMAVES$) can be black box simulated by the algorithms $(\Sim_S, \Sim_E)$ below.
+  In the random oracle model, the Schnorr signature oracle $S$ (for $\EUFCMA$) and encrypted signature oracle $E$ (for $\EUFCMAVES$) can be simulated by the algorithms $\Sim_S$ and  $\Sim_E$ respectively.
   $\Sim_S$ is an adapted version of the original simulator which does not program the random oracle or abort itself but rather returns how the random oracle should be programmed in its returned advice $\radvice := ((R,X,m),c)$ and lets the reduction decide whether to abort.
-  Clearly $\Sim_E$ perfectly simulates the view of the $\EUFCMAVES$ forger.
+  $\Sim_E$ uses the same approach to simulate encrypted signatures.
+  It is clear to see that the distribution of $\rquery$ for both reductions is the same as in the real experiments.
 
   \begin{center}
   \fbox{%
@@ -133,6 +134,7 @@ The simulator for $S$ used in the proof below is the black-box version of the si
 
   These two oracle simulators are substitutable as per Lemma~\ref{oracle-sub} which requires that for all possible $(\advice, \query_E)$ there must a $\query_S$ such that $\radvice$ is distributed identically between them.
   This is clearly the case here since for any value of $\query_S$ will produce $\radvice := ((R,X,m), c)$ will the same distribution as any $\query_E$ for any $\advice$.
-  Clearly $\Sim_E$ runs in the same time as $\Sim_S$ except for one extra group operation so the substitution means the reduction loses $Q_S^*\tau_{\G}$ time.
-  Note that for the typical reduction\cite{pointcheval2000security} from the $\EUFKO$ security of Schnorr $Q_S^* = Q_S$.
+  Clearly $\Sim_E$ runs in the same time as $\Sim_S$ except for one extra group operation so the substitution means the reduction loses $et_{\G}$ time.
 \end{proof}
+
+Note that for the typical reduction\cite{pointcheval2000security} from the $\EUFKO$ security of Schnorr $e = Q_S$.
