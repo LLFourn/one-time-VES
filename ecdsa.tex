@@ -116,7 +116,8 @@ If $\EncVer(X,Y,m,(R, \hat{R},\hat{s}, \pi)) = 1$ then $\hat{R} = (g^{H(m)}X^{\R
 
 \subsection{ECDSA $\EUFCMAVES$ security}
 
-The ECDSA one-time VES is flawed with respect to its $\EUFCMAVES$ security. Each valid ciphertext surreptitiously leaks the Diffie-Hellman key between the public signing key and the encryption key i.e.\ allows the receiver to compute $X^y = Y^x$.
+The $\EUFCMAVES$ security of the ECDSA one-time VES is flawed.
+Each valid ciphertext surreptitiously leaks the Diffie-Hellman key between the public signing key and the encryption key i.e.\ allows the receiver to compute $X^y = Y^x$.
 At a high level, the problem arises because the value $s$ in the signature is computed through the product of $r^{-1}$ and $x$ and then $\pi$ reveals the product of $Y$ and $r$ and $R$.
 The adversary can then cancel out $r$ from the picture and is left with $Y^x$.
 

@@ -55,20 +55,22 @@ In this work we use a non-standard proof technique.
 Rather than developing new security reductions for our new security game we take an existing reduction and transform it into a reduction for our property.
 Our technique is slightly non-black box in that we treat the reduction as a black-box but separate one or more of its \emph{oracle simulators} into black-boxes as well.
 This allows us to replace an oracle simualtor with a different simualtor for a different oracle while maintaining both the view of the new set of adversaries and the original reduction.
-First we recall the notion of a security game and reductions between with this separation.
+First we recall the notion of a security game and reductions between them with this separation in mind.
 
-A security game defines two machines (or equivalently algorithms), a challenger $\C$ and adversary $\adv$, that sequentially send messages to each other.
+A security game defines two \emph{Interactive Turing Machines} (ITM) or more loosely algorithms, a challenger $\C$ and adversary $\adv$, that sequentially send messages to each other.
 If at the end of the game the \emph{transcript} of the messages satisfy a game specific predicate then the adversary is said to have succeeded, otherwise they have failed.
 A simple and relevant example is the signature \emph{unforgeability} games where $\C$ sends $\adv$ a public key $X$ and then $\adv$ succeeds if she sends back a valid signature on any message under $X$.
 
-To show the scheme is secure i.e no such efficient $\adv$ exists, we construct another machine $\R$ (a \emph{reduction}) that uses $\adv$ as a \emph{black-box} to solve some hard problem $\hardproblem$, where $\hardproblem$ is another security game that is assumed to be hard to solve.
+To show the scheme is secure i.e no such efficient $\adv$ exists, we construct another machine $\R$ (a \emph{reduction}) that uses $\adv$ as a \emph{black-box} to solve another security game $\hardproblem$, where $\hardproblem$ that is assumed to be hard to solve.
 From the \emph{view} of $\adv$, interacting with $\R$ must be indistinguishable from interacting with the ordinary challenger $\C$.
-The existence of $\R$ \emph{reduction} contradicts the existence of an efficient $\adv$ or more concretely allows us to upper bound the success probability and lower bound the running time of any $\adv$ in terms of the assumed difficultly of $\hardproblem$.
+The existence of $\R$ contradicts the existence of an efficient $\adv$ or, more concretely, allows us to upper bound the success probability and lower bound the running time of any $\adv$ in terms of the assumed difficultly of $\hardproblem$.
 
-A security game may allow the $\adv$ to query a set of oracles.
-For example, in the $\EUFCMA$ game the signature forging adversary may request from $\C$ a signature on a certain message towards its end of forging a signature on another message.
-In a reduction, $\R$ must simulate the responses to the queries so they are distributed just they would be if they had come from $\C$.
+A security game may allow $\adv$ to query a set of oracles and this our particular focus.
+For example, in the $\EUFCMA$ game the signature forging adversary may request a signature on a certain message from $\C$  towards its end of forging a signature on another message.
+$\R$ must simulate the responses to the queries so they are distributed just they would be if they had come from $\C$.
 We will call an algorithm a reduction uses to simulate the responses to oracle queries an \emph{oracle simulator}.
+
+
 
 
 
@@ -79,18 +81,19 @@ We will call an algorithm a reduction uses to simulate the responses to oracle q
   We say $\R$ is a reduction from $\ghardproblem$ to $\hardproblem$ if its probability of success and execution time in the $\ghardproblem$ security game is a function of the probability success and execution time of $\adv$ in the $\hardproblem$ security game.
   The existence of $\R$ allows us to bound the success of any adversary against $\hardproblem$ by the difficulty of $\ghardproblem$.
   Specifically, we say $\R$ is a reduction from $\ghardproblem$ to $\hardproblem$ if given any $\adv$ that $(\tau, \e, Q_1,...,Q_n)$-solves $\hardproblem$, $\R$ $(\tau', \e', Q_1',\dots,Q_m')$-solves $\ghardproblem$ where $\e \leq \bound_\e(\e', Q_1,\dots,Q_n) $ and $\tau \geq \bound_\tau(\tau, Q_1,\dots,Q_n)$ and $Q_1,\dots,Q_n$ (resp. $Q_1', \dots, Q_m'$) are the number of queries made by $\adv$ (resp. $\R$) to each of the $n$ (resp. $m$) oracles available while solving $\hardproblem$ (resp. $\ghardproblem$).
+  We refer to $(\bound_\tau, \bound_\e)$ as the bounding functions implied by $\R$.
 
-  \textbf{oracle queries.} When $\adv$ makes any query to an oracle $\O_i$ it has access to in $\hardproblem$ $\R$ is activated (as it is the notional challenger).
-  In particular, $\R$ is activated with $(\mathit{oracle}, i,\mathbf{q})$ where $\query$ is the query $\adv$ is making to $\O_i$.
-  $\R$ must then \emph{blindly} forward $q$ to a oracle simulator subroutine $\Sim_i$ along with its own \emph{advice} $\advice$.
-  When activated with $(\advice, q)$ the simulator returns $(\radvice, \rquery)$ to $\R$ where $\radvice$ is the simulator's advice to $\R$ and $\rquery$ is the query response.
-  $\R$ then inspects $\radvice$ and decides whether to abort but cannot inspect $\rquery$.
-  If it does not abort, it outputs the query response $\rquery$ to $\adv$.
-  Note that restricting $\R$ so that it cannot read $(\query, \rquery)$ for each query is without loss of generality since, if need be, $\R$ can be defined with a simulator that returns $(\query,\rquery)$ in $\radvice$.
+  \textbf{oracle queries.} When $\adv$ makes any query to an oracle $\O_i$ it has access to in $\hardproblem$, $\R$ is activated (as it is the notional challenger).
+  In particular, $\R$ is activated with $(\mathtt{oracle}, i,\query_{ij})$ where $\query_{ij}$ is the $jth$ query $\adv$ makes to $\O_i$.
+  $\R$ must then \emph{blindly} forward $\query_{ij}$ to a oracle simulator subroutine $\Sim_i$ along with its own \emph{advice} $\advice_{ij}$.
+  When activated with $(\advice_{ij}, \query_{ij})$ the simulator returns $(\radvice_{ij}, \rquery_{ij})$ to $\R$ where $\radvice_{ij}$ is the simulator's advice to $\R$ and $\rquery_{ij}$ is the query response.
+  $\R$ then inspects $\radvice_{ij}$ and decides whether to abort but cannot inspect $\rquery_{ij}$.
+  If it does not abort, it $\R$ responds with $\rquery_{ij}$ to $\adv$.
+  Note that restricting $\R$ so that it cannot read $\query_{ij}$ or $ \rquery_{ij}$ for each query is without loss of generality since, if need be, $\R$ can be defined with a simulator that returns $(\query_{ij},\rquery_{ij})$ in $\radvice_{ij}$.
 
-  \textbf{oracle simulator requirements.} $\R$ may be defined with any set of simulators $\Sim_1,\dots,\Sim_n$ for each oracle in $\hardproblem$ as long as they preserve the view $\adv$ with respect to $\hardproblem$.
-  $\R$ cannot choose the random tape of its simulators, instead they are provided directly by the environment.
-  If $\ghardproblem$ allows oracle queries then the simulators query $\ghardproblem$ directly without activating $\R$.
+  \textbf{oracle simulator requirements.} $\R$ may be defined with any set of oracle simulators $\Sim_1,\dots,\Sim_n$ for each oracle in $\hardproblem$ as long as they preserve the view $\adv$ with respect to $\hardproblem$.
+  $\R$ cannot choose the random tape of its simulators (they are sampled randomly by the environment).
+  If $\ghardproblem$ allows oracle queries then the simulators may query $\ghardproblem$ directly without activating $\R$.
   The execution time of the simulator contributes to the execution time of $\R$ but the execution of oracles from $\ghardproblem$ do not.
 
   \textbf{rewinding.} $\R$ may ``rewind'' $\adv$, which in our definition simply means activating a new instance of $\adv$ with the same random tape.
@@ -99,49 +102,51 @@ We will call an algorithm a reduction uses to simulate the responses to oracle q
 \end{definition}
 
 
-In our definition we have defined oracle simulators in an unusually discrete way.
-Typically, when describing a simulator for an oracle in a reduction researchers will describe the simualtor as part of $\R$ itself.
-The simulator will often mutate the internal state of the algorithm and abort on its own accord under certain conditions.
-We require that reductions use oracle simulators in a black-box way.
-In other words, the oracle simulators are separate functions that can be invoked by the reduction but whose code remains hidden from the reduction.
-We do this so we may replace one oracle simulator with another without affecting the reduction.
+Our goal with our definition is to be able to substitute an oracle simulator with a different oracle simulator but to preserve the original proof.
+This is desirable for us since our $\EUFCMAVES$ security definition is just ordinary $\EUFCMA$ with a more powerful oracle.
+Developing new proofs from scratch for each potential VES scheme would be tedious and error prone.
+The following lemma allows us to take any $\EUFCMA$ reduction off the shelf and turn it into a $\EUFCMAVES$ reduction by just proving a simple congruence between the original simulator and the one replacing it.
+In particular from the perspective of $\R$, executions of the two simulators are indistinguishable then replacing one with the other cannot affect the advantage of $\R$.
 
 
-\begin{lemma}[Simulator Substitution]
+
+\begin{lemma}[Oracle Simulator Substitution]
   \label{oracle-sub}
-  Let $\hardproblem^A$ (resp. $\hardproblem^B$) be a variation of some hard problem $\hardproblem$ where the adversary has access to an additional oracle $A$ (resp. $B$).
-  Let $\R$ be a security reduction from $\ghardproblem$ to $\hardproblem^A$ which uses an oracle simulator $\Sim_A$ running in at least $t^A_{\min}$ time per query to simulate $A$.
+  Let $\hardproblem^A$ (resp. $\hardproblem^B$) be a variation of some security game $\hardproblem$ where the adversary has access to an additional oracle $A$ (resp. $B$) for which it can make $Q$ queries.
+  Let $\R$ be a security reduction from $\ghardproblem$ to $\hardproblem^A$ with bounding functions $(\bound^A_\tau, \bound^A_\e, )$ which uses an oracle simulator $\Sim_A$ running in at least $t^A_{\min}$ time per query to simulate $A$.
   Let $\Sim_B$ be a simulator for $B$ running in at most $t^B_{\max}$ time per query.
   If for any $q^B$ there exists a $q^A$ such that the distributions of $\radvice_A$ and $\radvice_B$ are identical for all possible advice $\advice$ where $(\radvice_A, \cdot) \sample \Sim_A(\advice, q^A)$ and $(\radvice_B, \cdot) \sample \Sim_B(\advice, q^B)$,
   then $\R$ is also a reduction from $\ghardproblem$ to $\hardproblem^B$.
-  In particular the reduction has bounding functions $(\bound_\e, \bound^B_\tau)$ where $\bound^B_\tau(\tau) = \bound_\tau(\tau) - e(t^B_{\max} - t^A_{\min})$ where $e$ is the number of times $\R^A$ executes $\Sim_A$ (which is the same as the number of times $R^B$ executes $\Sim_B$).
+  In particular the reduction has bounding functions $(\bound^B_\e, \bound^B_\tau)$ where $\bound^B_\e = \bound^A_\e,\bound^B_\tau(\tau, Q) = \bound^A_\tau(\tau, Q) - e(t^B_{\max} - t^A_{\min})$ and $e$ is the number of times $\R$ executes the oracle simualtor.
+  Note that $e$ is not necessarily equal to $Q$ but will be upper bounded by some polynomial of $Q$ if the reduction is efficient.
 \end{lemma}
 
 \begin{proof}
   Let $\R_A$ and $\R_B$ be instances of a the reduction algorithm with oracle simulators $\Sim_A$ and $\Sim_B$ respectively.
-  By definition, given an adversary $\adv_A$ that breaks $\hardproblem^A$ with advantage $\e$, $\R_A$ outputs a solution to $\ghardproblem$ with at probability $\e_A'$ where $\bound_\e(\e_A') \geq \e_A$.
-  R must does this regardless of the time that $\adv_A$ takes to run.
-  Now consider an adversary $\adv_B$ who breaks $\hardproblem^B$ with advantage $\e$ but $\R_B$ only outputs a solution to $\ghardproblem$ with probability $\e_B'$ where $\e_B' \neq \e_A'$.
+  By definition, given an adversary $\adv_A$ that breaks $\hardproblem^A$ with advantage $\e$, $\R_A$ outputs a solution to $\ghardproblem$ with at least probability $\e_A$.
+  $\R$ does this regardless of the time that $\adv_A$ takes to run.
 
-  Now we contradict the existence of $\adv_B$,
-  Construct an inefficient adversary $\adv_A^*$ against $\hardproblem^A$ using $\adv_B$ as a black box as follows.
+  To prove our lemma we must contradict the existence of an $\adv_B$ against $\hardproblem^B$ with advantage $\e$ where $\R_B$ outputs a solution to $\ghardproblem$ with at least $\e_B$ where $\e_B <  \e_A$.
+  First, we construct an inefficient adversary $\adv_A^*$ against $\hardproblem^A$ using $\adv_B$ as a black box as follows.
   $\adv_A^*$ forwards messages between challenger and $\adv_B$ unmodified.
   Any oracle query $q^B$ made by $\adv_B$ to $B$ $\adv_A^*$ answers by exhaustive search such that the response is distributed identically to the real $B$.
-  Additionally, for each query $q^B$, $\adv_A^*$ determines the corresponding query $q^A$ for $q^B$ (as described in the lemma) and queries this to $A$.
+  Additionally, for each query $q^B$, $\adv_A^*$ determines the corresponding query $q^A$ for $q^B$ (the existence of such a query is required by the lemma) and queries this to $A$.
   The view of $\R^A$ or $R^B$ at the end of its execution with either adversary will be in the form $(\varGamma, (\advice_1,\radvice_1), \dots, (\advice_e,\radvice_e))$
   where $\varGamma$ is the transcript messages of $\hardproblem$ and $(\advice_i,\radvice_i)$ are the advice given to and received from the oracle simulator for each of the adversary's oracle queries.
   Every $\varGamma$ has equal probability of being from an execution with $\adv_B$ or $\adv_A^*$ since $\adv_A^*$ is just forwarding messages to $\adv_B$.
-  This claim extends to the advice $(\advice_1,\radvice_1), \dots, (\advice_e,\radvice_e)$ since each query from $\adv_B$ to $B$ is intercepted by $\adv_A^*$ and converted to the corresponding to query to $A$ which produces an identically distributed $\radvice$ from $\Sim_A$ (the existence of such a query is required by the lemma).
-  Since the advantage of $\R^A$ against $\ghardproblem$ when interacting with $\adv_A^*$ is $\e_A'$, the advantage of $\R^B$ interacting with $\adv_B$ must be the same since their views are identical at the end of the execution.
-  Therefore the advantage bounds $\R_A$ and $\R_B$ place on the advantage on $\adv_A$ and $\adv_B$ are the same.
+  This claim extends to the advice $(\advice_1,\radvice_1), \dots, (\advice_e,\radvice_e)$ since each query from $\adv_B$ to $B$ is intercepted by $\adv_A^*$ and converted to the corresponding to query to $A$ which produces an identically distributed $\radvice$ from $\Sim_A$. Thus the view of $\R_B$ interacting with $\adv_B$ and $\R_A$ interacting with $\adv^*A$ is identical.
+  But this contradicts the existence of $\adv_B$, since $\R$ is able to distinguish between interacting with $\adv_B$ and $\adv_A^*$ since it outputs a solution with advantage $\e_B$ for the former and $\e_A$ for the latter with $\e_B < \e_A$.
+  Clearly there cannot be a distinguisher (even with unbounded running time) for identical distributions and so $\adv_B$ cannot exist and $\e_B$ must equal $\e_A$.
 
-  Clearly, the lower bound on the execution of any $\adv_B$ implied by $\R_B$ will the same as $\R_A$ except for losing some factor in the number of oracle simulator executions $e$ multiplied by the upper bound on the overhead of $\Sim_B$ over $\Sim_A$ i.e. $t^B_{\max} - t^A_{\min}$.
+  The lower bound on the execution of any $\adv_B$ implied by $\R_B$ will the same as $\R_A$ except for losing some factor in the number of oracle simulator executions $e$ multiplied by the upper bound on the overhead of $\Sim_B$ over $\Sim_A$ i.e. $t^B_{\max} - t^A_{\min}$.
 \end{proof}
 
-\begin{corollary}[Simulator Substitution with Extra Oracles]
-  If in Lemma~\ref{oracle-sub} $\Sim_B$ requires oracle to some additional oracle $\O^*$ to simulate the view of $\adv_B$, then $\R_B$ will be a reduction to $\ghardproblem^*$ instead where $\ghardproblem^*$ is a variant of $\ghardproblem$ that provides $\O^*$.
+For our ECDSA one-time VES proof we need to extend the above lemma to include the case where $\Sim_B$ requires additional oracles to run.
+
+\begin{corollary}[Oracle Simulator Substitution with Extra Oracles]
+  If in Lemma~\ref{oracle-sub} $\Sim_B$ requires access to some additional oracle $\O^*$ to simulate the view of $\adv_B$, then $\R_B$ will be a reduction to $\ghardproblem^*$ instead where $\ghardproblem^*$ is a variant of $\ghardproblem$ that provides $\O^*$.
 \end{corollary}
 \begin{proof}
   When $\Sim_B$ invokes $\O^*$ it does so without activating $\R$ so the view of $\R$ is unchanged.
-  Thus when $\R$ outputs a solution to $\ghardproblem$ from the view of the challenger it is actually outputting a solution to $\ghardproblem^*$ since its oracle simualtor $\Sim_B$ (without $\R$ knowing) made queries to $O^*$.
+  Thus when $\R$ outputs a solution to $\ghardproblem$ from the view of the challenger, it is a solution to $\ghardproblem^*$ since its oracle simualtor $\Sim_B$ (without $\R$ knowing) made queries to $O^*$.
 \end{proof}
