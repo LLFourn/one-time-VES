@@ -74,7 +74,7 @@ What we call the Schnorr one-time VES was introduced by Poelstra \cite{poelstra2
 \end{figure}
 
 Since the $\EncSign$ algorithm is a simple tweak of the sign algorithm it is easy to get an intuition for the security of the scheme.
-Unsurprisingly, we find that the scheme is unconditionally valid and recoverable and is \EUFCMAVES secure.
+Unsurprisingly, we find that the scheme is unconditionally valid and recoverable and is $\EUFCMAVES$ secure.
 We now formally prove these properties.
 
 \begin{lemma}
@@ -88,7 +88,7 @@ By the same token, the scheme is recoverable because $\Rec((\hat{R}Y, \hat{s} + 
 \end{proof}
 
 To prove $\EUFCMAVES$ security we start with an existing $\EUFCMA$ reduction and apply the simulator substitution lemma to preserve the reduction against adversaries with access an encrypted signature oracle instead.
-Pointcheval and Stern\cite{pointcheval2000security} provided the original ``forking lemma'' \EUFCMA security proof for Schnorr signatures that reduced from $\DLOG$ to its $\EUFKO$ security which they then reduced to its $\EUFCMA$ security.
+Pointcheval and Stern\cite{pointcheval2000security} provided the original ``forking lemma'' $\EUFCMA$ security proof for Schnorr signatures that reduced from $\DLOG$ to its $\EUFKO$ security which they then reduced to its $\EUFCMA$ security.
 The simulator for $S$ used in the proof below is the black-box version of the simulation in the original reduction.
 
 \begin{theorem}

@@ -114,7 +114,7 @@ To make our security claim we imagine that these two reductions have been combin
 \label{secp-qdlsdh}
 
 We base our estimates on the work of Brown et al.\cite{SDHP} who show approximately the best known algorithm for solving $u\QDLSDH$\footnote{In our description of $u\QDLSDH$ the adversary is given a challenge group element up front (to make it easy to apply the simulator substitution lemma) and in Brown et al.\ work they only provide the oracle but this difference is immaterial.} which works in $O(\sqrt{q/u})$ time where $q$ is the order of the group.
-The intuition for the algorithms is this: if we suppose the order of $Z^*_q$ is divisible by $u$ and so $uv = q-1$ for some $v$, then there are subgroups of $Z^*_q$ of order $u$ and $v$ since they both divide the order.
+The intuition for the algorithms is this: if we suppose the order of $\ZZ^*_q$ is divisible by $u$ and so $uv = q-1$ for some $v$, then there are subgroups of $\ZZ^*_q$ of order $u$ and $v$ since they both divide the order.
 Simplifying a bit, the attack splits the problem of finding the discrete logarithm $x$ into finding the discrete logarithm of two smaller components of $x$ in the subgroups of order $u$ and $v$.
 To this end the attacker queries the oracle $u$ times to compute $g^{x^u}$ which allows it to work in the subgroup of order $v$ where it solves the smaller $\DLOG$ problem using a modified baby-step-giant-step algorithm.
 With that result, they are able to do the same for the subgroup of order $u$ and combine the two results to finally output the discrete logarithm.

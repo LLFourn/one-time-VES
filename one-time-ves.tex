@@ -20,11 +20,12 @@ A One-Time Verifiably Encrypted Signature scheme (one-time VES) is a Verifiably 
 
 Technically, $\Rec$ takes a ``recovery key'' $\delta$ rather than the ciphertext $\hatsigma$ but they should usually be thought of as equivalent. The distinction only really becomes necessary in Section~\ref{semi-scriptless} when we construct a simple two party encrypted signing protocol where one party is not able to output the whole ciphertext but is able to output the recovery key.
 
-To be considered secure, we require a one-time VES scheme to have the \emph{completeness}, \emph{validity} and \EUFCMAVES properties of an ordinary VES along with \emph{recoverability} which we define as follows.
+To be considered secure, we require a one-time VES scheme to have the \emph{completeness}, \emph{validity} and $\EUFCMAVES$ properties of an ordinary VES along with \emph{recoverability} which we define as follows.
 
 \begin{definition}[Recoverability]
 
- A one-time VES scheme is recoverable if for all PPT algorithms $\adv$ the $\textsf{VES-Recover}$ experiment outputs 1 except with negligible probability over the coin tosses of $\adv$ and $\Setup$:
+  A one-time VES scheme is $(\tau,\e)$-recoverable for a given security paramter $k$ if $\prob{\textsf{VES-Recover}^{\adv}_{\Setup}(k) = 1} \leq \e$ for all adversaries $\adv$ running in time at most $\tau$.
+  The the probability is taken over the coin tosses of $\Setup$ in addition to those of $\adv$.
 
 \begin{center}
     \fbox{%

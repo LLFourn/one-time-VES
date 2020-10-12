@@ -26,22 +26,25 @@ Any coherent VES should satisfy a basic notion of completeness such that for all
     \[ \hatsigma = \EncSign(\skSign, \pkEnc, m) \implies \EncVer(\pkSign, \pkEnc, m, \hatsigma) = 1 \land \Verify(\pkSign, m, \DecSig(\skEnc, \hatsigma)) = 1 \]
 \end{definition}
 
-The original work BGLS proposed three security properties: \emph{validity}, \emph{unforgeability}, and \emph{opacity}. To meet the requirements of our setting, we will restate validity without reference to a trusted party and replace unforgeability with a new \emph{existential unforgeability under chosen message attack} (\EUFCMAVES) property. We keep the original definition of opacity. Therefore our VES requirements are informally as follows:
+The original work BGLS proposed three security properties: \emph{validity}, \emph{unforgeability}, and \emph{opacity}. To meet the requirements of our setting, we will restate validity without reference to a trusted party and replace unforgeability with a new \emph{existential unforgeability under chosen message attack} ($\EUFCMAVES$) property.
+We keep the original definition of opacity. Therefore our VES requirements are informally as follows:
 
 \begin{itemize}
     \item \textbf{Validity:} It is infeasible to generate a valid looking ciphertext that does not yield a valid signature upon decryption.
-    \item \EUFCMAVES: A VES ciphertext does not help an adversary forge signatures. In other words, an adversary cannot learn anything useful from a VES ciphertext other than the signature that is encrypted.
+    \item $\EUFCMAVES$: A VES ciphertext does not help an adversary forge signatures. In other words, an adversary cannot learn anything useful from a VES ciphertext other than the signature that is encrypted.
     \item \textbf{Opacity:} The encrypted signature cannot be extracted from the ciphertext without the decryption key.
 \end{itemize}
 
 
-We formally present our new definitions for validity and introduce \EUFCMAVES after summarizing previous work on improving VES definitions. We do not formally describe opacity as the original definitions are not applicable the one-time VES (see Section~\ref{otVES}).
+We formally present our new definitions for validity and introduce $\EUFCMAVES$ after summarizing previous work on improving VES definitions. We do not formally describe opacity as the original definitions are not applicable the one-time VES (see Section~\ref{otVES}).
 
 \subsection{Previous Revisions of the VES Security Definitions}
 
-Rückert et al.\ \cite{Ruckert:2009:SVE:1615384.1615387} noticed that \emph{key independent} schemes (which we call Sign then Encrypt (StE)) whose underlying signature schemes are \EUFCMA secure can be proved unforgeable generically.
+Rückert et al.\ \cite{Ruckert:2009:SVE:1615384.1615387} noticed that \emph{key independent} schemes (which we call Sign then Encrypt (StE)) whose underlying signature schemes are $\EUFCMA$ secure can be proved unforgeable generically.
 This is remarkable as the original BGLS scheme, which is StE, had an involved proof for unforgeability that spanned several pages.
-We use a similar idea to prove any StE scheme satisfies \EUFCMAVES\@. Hanser et al.\ \cite{VES-structure-preserving} also identified the importance of the $\EUFCMA$ security of the underlying signature scheme. They proved that the underlying signature scheme is unforgeable if the VES scheme is unforgeable based on a different property.
+We use a similar idea to prove any StE scheme satisfies $\EUFCMAVES$.
+Hanser et al.\ \cite{VES-structure-preserving} also identified the importance of the $\EUFCMA$ security of the underlying signature scheme.
+They proved that the underlying signature scheme is unforgeable if the VES scheme is unforgeable based on a different property.
 
 Calderon et al.\ \cite{calderon2014rethinking} discuss the original definitions in detail.
 They show a pathological VES scheme which is secure according to the original definitions but can be constructed only using a signature scheme i.e.\ without any encryption.
@@ -49,8 +52,8 @@ For simplicity, our definitions exclude the pathological constructions but could
 
 Shao \cite{SHAO20081961} addresses the assumption of trust in the adjudicator by providing a stronger definition of unforgeability which prevents forging a VES even if the adjudicator is corrupted.
 Unfortunately, the original and highly practical VES scheme of BGLS does not meet this stronger requirement.
-Our approach to removing trust in a third party is to simply replace the concept of unforgeability with \EUFCMAVES\@.
-The ability of malicious parties to forge signature encryptions is not a concern in our setting as long as they cannot forge signatures (which is already ensured by the \EUFCMA security of the signature scheme).
+Our approach to removing trust in a third party is to simply replace the concept of unforgeability with $\EUFCMAVES$.
+The ability of malicious parties to forge signature encryptions is not a concern in our setting as long as they cannot forge signatures (which is already ensured by the $\EUFCMA$ security of the signature scheme).
 
 \subsection{Validity}
 
@@ -77,7 +80,7 @@ We choose to use the original name of validity to capture this idea as it ensure
     }
 \end{center}
 \end{definition}
-\subsection{\EUFCMAVES}
+\subsection{$\EUFCMAVES$}
 
 Our goal in this section is to formally capture the requirement that nothing can be learned from a VES ciphertext except the signature encrypted within.
 We start with the typical $\EUFCMA$ security definition for signature schemes which ensures that from a signature, nothing can be learned about a signature on any other message under the same signing key.
@@ -93,11 +96,11 @@ Note that we provide the encryption oracle $E$ instead of $S$, rather than in ad
 This assumption holds as long as decrypted signatures are indistinguishable from ordinary signatures, which is true except for some pathological constructions\cite{calderon2014rethinking}.
 We call denote this modified experiment $\EUFCMAVES$ and define it as follows.
 
-\begin{definition}[\EUFCMAVES]
-  A VES scheme $\hatSigma$ is $(\epsilon, \tau, Q_E)$-\EUFCMAVES secure if $\prob{ \EUFCMAVES^{\F}_{\hat{\Sigma}} = 1} \leq \epsilon$ for all forgers $\F$ making at most $Q_E$ signature encryption queries and running in at most time $\tau$.
+\begin{definition}[$\EUFCMAVES$]
+  A VES scheme $\hatSigma$ is $(\epsilon, \tau, Q_E)$-$\EUFCMAVES$ secure if $\prob{ \EUFCMAVES_{\hat{\Sigma}} = 1} \leq \epsilon$ for all forgers $\F$ making at most $Q_E$ signature encryption queries and running in at most time $\tau$.
 \begin{center}
 \fbox{
-    \procedure{$\EUFCMAVES^{\F}_{\hat{\Sigma}}$}{
+    \procedure{$\EUFCMAVES_{\hat{\Sigma}}$}{
         Q := \emptyset \\
         (\skSign,\pkSign) \sample \KeyGen \\
         (m^*, \sigma) \sample \F^{E}(\pkSign) \\
@@ -114,12 +117,12 @@ We call denote this modified experiment $\EUFCMAVES$ and define it as follows.
 
 $\EUFCMAVES$ effectively replaces the original definition of \emph{unforgeability} so we now discuss and prove the relationship between the two.
 The original unforgeability property referred to signature encryptions being unforgeable under the trusted adjudicator's encryption key and is therefore inadequate for our setting.
-\EUFCMAVES says nothing about the unforgeability of signature encryptions.
+$\EUFCMAVES$ says nothing about the unforgeability of signature encryptions.
 In fact, an adversary who can produce valid VES ciphertexts without the secret signing key is perfectly compatible. % TODO: show algorithms for doing this
 Of course, they will never be able to forge a VES ciphertext under a particular encryption key.
 If they could do that, then they could trivially forge an encrypted signature under a key for which they know the decryption key and decrypt it.
-The original definitions seem to have missed this intuition: it is not the security of the VES scheme that prevents there being a successful forger of signature encryptions under a particular key, the \EUFCMA security of the underlying signature scheme already ensures that no such algorithm can exist.
-After recalling the original BGLS definition of unforgeability, we use this intuition to prove that any \EUFCMAVES scheme is also unforgeable.
+The original definitions seem to have missed this intuition: it is not the security of the VES scheme that prevents there being a successful forger of signature encryptions under a particular key, the $\EUFCMA$ security of the underlying signature scheme already ensures that no such algorithm can exist.
+After recalling the original BGLS definition of unforgeability, we use this intuition to prove that any $\EUFCMAVES$ scheme is also unforgeable.
 
 \begin{definition}[BGLS VES Unforgeability \cite{Boneh:2003:AVE:1766171.1766207}]
 \label{original-unforgeability}
@@ -155,7 +158,7 @@ Note that unlike in the $\EUFCMAVES$ experiment the oracles in $\textsf{BGLS-Unf
 
 \end{definition}
 
-\begin{theorem}[\EUFCMAVES + Validity $\implies$ BGLS Unforgeability]
+\begin{theorem}[$\EUFCMAVES$ + Validity $\implies$ BGLS Unforgeability]
   Let $\hatSigma$ be a VES scheme and let $\F$ be a forger that $(\tau, \epsilon, Q_E, Q_D)$-breaks the BGLS unforgeability of it.
   Then, there exists a forger $\R$ that $(\tau_0, \epsilon_0, Q_E)$-breaks the $\EUFCMAVES$ security of $\hatSigma$ and an adversary $\adv_v$ that $(\tau_v, \epsilon_v)$-breaks the validity of $\hatSigma$, where $\epsilon \leq \epsilon_0 + \epsilon_v$ and $\tau_v \approx \tau_0 \approx \tau$.
 \end{theorem}
@@ -201,8 +204,8 @@ The overhead of $\R$ and $\R_v$ is only the time they take to simulate the oracl
 
 \subsection{Sign Then Encrypt VES}
 
-We now make the case for using \EUFCMAVES as the standard VES security definition even in the trusted party setting since it implies BGLS unforgeability and it is much easier to prove for the schemes that have been developed so far.
-We can prove all existing schemes we are aware of \cite{Boneh:2003:AVE:1766171.1766207, Ruckert:2009:SVE:1615384.1615387, waters-ves, SHAO20081961, VES-structure-preserving} \EUFCMAVES secure just by the \emph{Sign then Encrypt} (StE) structure they all share.
+We now make the case for using $\EUFCMAVES$ as the standard VES security definition even in the trusted party setting since it implies BGLS unforgeability and it is much easier to prove for the schemes that have been developed so far.
+We can prove all existing schemes we are aware of \cite{Boneh:2003:AVE:1766171.1766207, Ruckert:2009:SVE:1615384.1615387, waters-ves, SHAO20081961, VES-structure-preserving} $\EUFCMAVES$ secure just by the \emph{Sign then Encrypt} (StE) structure they all share.
 That is, internally the $\EncSign$ algorithm first generates a normal signature using $\Sign$ and then encrypts the result. Formally:
 
 \begin{definition}[Sign then Encrypt VES]
@@ -210,9 +213,9 @@ A \emph{Sign then Encrypt} (StE) VES scheme is defined with an ordinary \emph{un
 \end{definition}
 
 It is easy to see that any valid StE scheme must be $\EUFCMAVES$ secure.
-The encryption oracle $E$ the forger has access to in the $\EUFCMAVES$ experiment can be simulated just by encrypting the result of a query to the signature oracle $S$ that the \EUFCMA experiment provides.
+The encryption oracle $E$ the forger has access to in the $\EUFCMAVES$ experiment can be simulated just by encrypting the result of a query to the signature oracle $S$ that the $\EUFCMA $experiment provides.
 
-\begin{theorem}[StE + \EUFCMA $\implies$ \EUFCMAVES]
+\begin{theorem}[StE + $\EUFCMA$ $\implies$ $\EUFCMAVES$]
   Let $\hatSigma$ be a StE VES scheme,  $\Sigma$ be its underlying signature scheme and $\Pi = (\ENCALG)$ be its associated public key encryption scheme and let $\R$ be a reduction to the $\EUFCMA$ security of $\Sigma$ with signature simulator $\Sim_S$.
   If $\R$ shows that $\Sigma$ is at least $(\tau, \e, Q_S)$-$\EUFCMA$ secure then $\hatSigma$ is at least $(\tau', \e, Q_E)$-$\EUFCMAVES$ secure where
 

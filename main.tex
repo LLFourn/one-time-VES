@@ -50,10 +50,9 @@
 \def\SB#1{\textsubscript{#1}}
 
 \newcommand{\psidr}{ \psi{}\textsf{dr}}
-\newcommand{\EUFCMA}{\textsf{EUF-CMA}\xspace}
+\newcommand{\EUFCMA}{\textsf{EUF-CMA}^S}
 \newcommand{\EUFKO}{\textsf{EUF-KO}\xspace}
-\newcommand{\EUFCMAVES}{\textsf{EUF-CMA}[\textsf{VES}]\xspace}
-\newcommand{\EUFCMAVESot}{\textsf{EUF-CMA}[\textsf{VES}\textsubscript{ot}]\xspace}
+\newcommand{\EUFCMAVES}{\textsf{EUF-CMA}^E}
 \newcommand\getsdollar{\mathrel{{\leftarrow}\vcenter{\hbox{\tiny\rmfamily\upshape\$}}}}
 \newcommand{\SE}{SE}
 \newcommand{\otVES}{\textsf{VES}\textsubscript{ot}}
@@ -265,7 +264,7 @@ Having said this, semi-scriptless protocols are a practical alternative to two-p
 
 
 % \begin{theorem}
-% Let $\hatSigma$ be StE VES scheme with associated public key encryption scheme $\Pi$ and let $\Sigma$ be its underlying signature scheme. If $\Sigma$ is \EUFCMA and $\Pi$ is \textsf{OW-CPA} then it is opaque.
+% Let $\hatSigma$ be StE VES scheme with associated public key encryption scheme $\Pi$ and let $\Sigma$ be its underlying signature scheme. If $\Sigma$ is $\EUFCMA$ and $\Pi$ is \textsf{OW-CPA} then it is opaque.
 % \end{theorem}
 
 % \begin{proof}[Proof Sketch]
